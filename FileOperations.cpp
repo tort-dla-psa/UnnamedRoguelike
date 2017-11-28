@@ -1,12 +1,10 @@
 #include "material.h"
 #include<fstream>
+#include<vector>
 #include<ncurses.h>
 namespace FileOperations{
-	static material** LoadMaterials(short max, short &matcount){
-		material** materials = new material*[max];
-		for(int i=0; i<max; i++){
-			materials[i]=NULL;
-		}
+	static std::vector<material*> LoadMaterials(){
+		std::vector<material*> materials;
 		std::ifstream stones("raws/materials/stones.raw");
 		short count=0;
 		std::string name="";
@@ -24,9 +22,9 @@ namespace FileOperations{
 			if(line=="]"){
 				printw("%s ",name.c_str());refresh();
 				if(type=="gas"){
-					materials[count]=new gasMAT(img,density,value,name,count);
+					materials.push_back(new gasMAT(img,density,value,name,count));
 				}else{
-					materials[count]=new stoneMAT(img,density,value,melting,name,count);
+					materials.push_back(new stoneMAT(img,density,value,melting,name,count));
 				}
 				name="";
 				type="";
@@ -35,7 +33,6 @@ namespace FileOperations{
 				melting=-1;
 				density=-1;
 				count++;
-				matcount++;
 				continue;
 			}
 			short pos = line.find(":");

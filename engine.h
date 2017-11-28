@@ -4,6 +4,8 @@
 #include<string>
 #include<stdlib.h>
 #include<time.h>
+#include<vector>
+#include<algorithm>
 #include"tile.h"
 #include"map.h"
 #include"creature.h"
@@ -12,15 +14,12 @@
 #include"interface.h"
 class engine{
 	map* mp;
-	creature** creatures;
 	creature* player;
-	material** materials;
-	item** items;
 	camera* cam;
 	interface* win;
-	short numofcreatures, maxnumofcreatures;
-	short numofitems, maxnumofitems;
-	short numofmaterials, maxnumofmaterials;
+	std::vector<material*> materials;
+	std::vector<item*> items;
+	std::vector<creature*> creatures;
 	void WriteLog(tile* place, short dp);
 	void WriteLog(creature* target, short dp);
 	void DelCreature(creature* cr);

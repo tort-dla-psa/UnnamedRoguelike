@@ -49,7 +49,7 @@ short map::GetWidth(){	return width;}
 short map::GetHeight(){	return height;}
 short map::GetDepth(){	return depth;}
 
-Perlin::Perlin(short w, short h, short d, material** mats):map(w,h,d){
+Perlin::Perlin(short w, short h, short d, std::vector<material*> mats):map(w,h,d){
 	air = mats[0];
 	if(!air->GetPass())
 		return;

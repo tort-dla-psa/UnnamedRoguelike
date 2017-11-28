@@ -1,7 +1,8 @@
 #ifndef map_h
 #define map_h
-#include "tile.h"
-#include "material.h"
+#include<vector>
+#include"tile.h"
+#include"material.h"
 class creature;
 class map{
 	short width,height,depth;
@@ -24,7 +25,7 @@ public:
 };
 class Perlin: public map{
 public:
-	Perlin(short width, short height, short depth, material** mats);
+	Perlin(short width, short height, short depth, std::vector<material*> mats);
 };
 class camera{
 	creature* cr;

@@ -8,27 +8,11 @@ engine::engine(){
 		exit(1);
 	}
 	srand(time(NULL));
-	numofcreatures = 0;
 
-	maxnumofcreatures = 100;
-	creatures = new creature* [maxnumofcreatures];
-	for(short i=0; i<maxnumofcreatures; i++)
-		creatures[i] = NULL;
-	
-	numofmaterials = 0;
-	maxnumofmaterials = 50;
-	
-	numofitems = 0;
-	maxnumofitems = 200;
-	items = new item* [maxnumofitems];
-	for(short i=0; i<maxnumofitems; i++)
-		items[i] = NULL;
-	
-	materials = FileOperations::LoadMaterials(maxnumofmaterials, numofmaterials);
+	materials = FileOperations::LoadMaterials();
 	CreatePerlinMap();
 	AddCreature("Adam",'T',10,1,0,0,0);
 	AddCreature("Eve",'i',10,1,1,1,1);
-	refresh();getch();
 	CreateItem('0',1,1, materials[0],1,0,0);
 	CreateItem('1',2,2, materials[1],2,0,0);
 }
@@ -37,23 +21,19 @@ engine::~engine(){
 	delete mp;
 	delete cam;
 	delete win;
-	for(short i=0; i<maxnumofcreatures; i++)
-		if(creatures[i]!=NULL)
+	for(short i=0; i<creatures.size(); i++)
 			delete creatures[i];
-	delete[] creatures;
+	creatures.clear();
 	
-	for(short i=0; i<maxnumofitems; i++)
-		if(items[i]!=NULL)
+	for(short i=0; i<items.size(); i++)
 			delete items[i];
-	delete[] items;
+	items.clear();
 	
-	for(short i=0; i<maxnumofmaterials; i++)
-		if(materials[i]!=NULL)
+	for(short i=0; i<materials.size(); i++)
 			delete materials[i];
-	delete[] materials;
+	materials.clear();
 }
 
-//void engine::CreatePerlinMap(){	mp = new Perlin(100,100,50);}
 void engine::CreatePerlinMap(){	mp = new Perlin(100,100,50,materials);}
 void engine::drawrecurse(short x, short y, short z, short iter, short max){
 	tile* temp = mp->GetTile(x+cam->GetOffsetX(),y+cam->GetOffsetY(),z);
@@ -88,55 +68,50 @@ void engine::DrawMap(){
 }
 
 void engine::DoGravity(){
-	for(short i=0; i<numofcreatures; i++){
-		short x = creatures[i]->GetX();
-		short y = creatures[i]->GetY();
-		short z = creatures[i]->GetZ()+1;
+	for (auto &i:creatures){
+		short x = i->GetX();
+		short y = i->GetY();
+		short z = i->GetZ()+1;
 		tile* tilebelow = mp->GetTile(x,y,z);
 		while(tilebelow->IsSpace()){
 			if(tilebelow->GetCreature()==NULL){
-				creatures[i]->Move(tilebelow);
+				i->Move(tilebelow);
 				tilebelow = mp->GetTile(x,y,++z);
 			}else break;
 		}
 	}
-	for(short i=0; i<numofitems; i++){
-		if(items[i]->GetPlace()==NULL)
+	for (auto &i:items){
+		if(i->GetPlace()==NULL)
 			continue;
-		short x = items[i]->GetX();
-		short y = items[i]->GetY();
-		short z = items[i]->GetZ()+1;
+		short x = i->GetX();
+		short y = i->GetY();
+		short z = i->GetZ()+1;
 		tile* tilebelow = mp->GetTile(x,y,z);
 		while(tilebelow->IsSpace()){
-			items[i]->Move(tilebelow);
+			i->Move(tilebelow);
 			tilebelow = mp->GetTile(x,y,++z);
 		}
 	}
 }
 
 creature* engine::AddCreature(std::string name, char img, short hp, short dp, short x, short y, short z){
-	if(numofcreatures<maxnumofcreatures && mp->GetTile(x,y,z)->IsSpace()){
-		for(short i=0; i<maxnumofcreatures; i++){
-			if(creatures[i]==NULL){
-				creatures[i] = new creature(name, img, hp, dp, i);
-				tile* temptile = mp->GetTile(x,y,z);
-				creatures[i]->Move(temptile);
-				if(numofcreatures==0){
-					player = creatures[i];
-					win->AssignPlayer(player);
-					cam = new camera(player);
-				}
-				numofcreatures++;
-				return creatures[i];
-				}
-			}
+	tile* temptile = mp->GetTile(x,y,z);
+	if(temptile->IsSpace()){
+		creature* temp = new creature(name, img, hp, dp);
+		temp->Move(temptile);
+		creatures.push_back(temp);
+		if(creatures.size()==1){
+			player = temp;
+			win->AssignPlayer(player);
+			cam = new camera(player);
 		}
+		return temp;
+	}
 	return NULL;
 }
 void engine::DelCreature(creature* cr){
-	creatures[cr->GetId()]=NULL;
-	numofcreatures--;
-	delete cr;
+	std::vector<creature*>::iterator i = std::find(creatures.begin(), creatures.end(), cr);
+	delete creatures[i-creatures.begin()];
 }
 void engine::MovePlayer(char ch){
 	short* dirs = GetDir(ch);
@@ -193,16 +168,9 @@ void engine::PerformAttack(char ch){
 }
 
 item* engine::CreateItem(char img, short volume, short sharpness, material* materia){
-	if(numofitems<maxnumofitems){
-		for(short i=0; i<maxnumofitems; i++){
-			if(items[i]==NULL){
-				items[i]=new item(img,volume,sharpness,materia,i);
-				numofitems++;
-				return items[i];
-			}
-		}
-	}
-	return NULL;
+	item* temp = new item(img,volume,sharpness,materia);
+	items.push_back(temp);
+	return temp;
 }
 item* engine::CreateItem(char img, short volume, short sharpness, material* materia,  short x, short y, short z){
 	tile* temptile = mp->GetTile(x,y,z);
@@ -233,9 +201,9 @@ void engine::Drop(){
 	player->Drop(0,player->GetPlace());
 }
 
-void engine::DelItem(item* target){
-	items[target->GetId()]=NULL;
-	numofitems--;
+void engine::DelItem(item* it){
+	std::vector<item*>::iterator i = std::find(items.begin(), items.end(), it);
+	delete items[i-items.begin()];
 }
 
 void engine::HandleKey(char ch){
