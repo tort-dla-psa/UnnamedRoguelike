@@ -12,8 +12,8 @@ item::item(){
 	place=NULL;
 }
 
-item::item(char img, short volume, short sharpness, material* materia, short id):
-	img(img),volume(volume),sharpness(sharpness),materia(materia),id(id)
+item::item(char img, short volume, short sharpness, material* materia):
+	img(img),volume(volume),sharpness(sharpness),materia(materia)
 {
 	owner=NULL;
 	holder=NULL;
@@ -56,7 +56,6 @@ char item::GetImg(){		return img;}
 short item::GetX(){		return place->GetX();}
 short item::GetY(){		return place->GetY();}
 short item::GetZ(){		return place->GetZ();}
-short item::GetId(){		return id;}
 short item::GetPrice(){		return price;}
 short item::GetWeight(){	return materia->GetDensity()*volume;}
 short item::GetVolume(){	return volume;}

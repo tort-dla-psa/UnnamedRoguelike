@@ -5,7 +5,7 @@ class item;
 class tile;
 class creature{
 	std::string name;
-	short hp, dp, id;
+	short hp, dp;
 	short sightsize, inventorysize;
 	char img;
 	tile* place;
@@ -13,9 +13,9 @@ class creature{
 	item* inhand;
 	short itemcount;
 public:
-	creature();
+	creature(std::string name, char img, short hp, short dp);
 	~creature();
-	creature(std::string name, char img, short hp, short dp, short id);
+
 	short Attack(creature* target);
 	void GetDamage(short dhp);
 	short Dig(tile* target);
@@ -34,7 +34,6 @@ public:
 	short GetInvSize();
 	short GetItemsCount();
 	short GetSightSize();
-	short GetId();
 	short GetHp();
 	short GetX();
 	short GetY();

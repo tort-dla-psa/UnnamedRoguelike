@@ -4,20 +4,8 @@
 
 const short dmgcoef = 1;
 
-creature::creature(){
-	place = NULL;
-	inhand = NULL;
-}
-
-creature::~creature(){
-	if(place!=NULL)
-		place->PlaceCreature(NULL);
-	place=NULL;
-	inhand=NULL;
-}
-
-creature::creature(std::string name, char img, short hp, short dp, short id):
-	name(name), img(img), hp(hp), dp(dp), id(id)
+creature::creature(std::string name, char img, short hp, short dp):
+	name(name), img(img), hp(hp), dp(dp)
 {
 	place = NULL;
 	inhand = NULL;
@@ -26,6 +14,11 @@ creature::creature(std::string name, char img, short hp, short dp, short id):
 	inventory = new item*[inventorysize];
 	for(short i=0; i<inventorysize; i++)
 		inventory[i]=NULL;
+}
+
+creature::~creature(){
+	if(place!=NULL)
+		place->PlaceCreature(NULL);
 }
 
 short creature::Attack(creature* target){
@@ -105,7 +98,6 @@ char creature::GetImg(){		return img;}
 short creature::GetItemsCount(){	return itemcount;}
 short creature::GetInvSize(){		return inventorysize;}
 short creature::GetSightSize(){		return sightsize;}
-short creature::GetId(){		return id;}
 short creature::GetHp(){		return hp;}
 short creature::GetX(){			return place->GetX();}
 short creature::GetY(){			return place->GetY();}

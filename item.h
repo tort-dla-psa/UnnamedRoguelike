@@ -5,7 +5,7 @@ class tile;
 class creature;
 class material;
 class item{
-	short price,volume,rarity,id;
+	short price,volume,rarity;
 	short sharpness;
 	char img;
 	creature* owner;
@@ -15,7 +15,7 @@ class item{
 	std::string quality;
 public:
 	item();
-	item(char img, short volume, short sharpness, material* materia,  short id);
+	item(char img, short volume, short sharpness, material* materia);
 	~item();
 	void SetQuality(std::string quality);
 	void SetRarity(short rarity);
@@ -26,7 +26,6 @@ public:
 	void Move(creature* newholder);
 	std::string GetQuality();
 	char GetImg();
-	short GetId();
 	short GetX();
 	short GetY();
 	short GetZ();
