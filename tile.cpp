@@ -3,18 +3,27 @@
 #include "item.h"
 #include <ncurses.h>
 
-tile::~tile(){};
+tiletype::tiletype(char img, double dropchance, material* mat):
+	img(img),dropchance(dropchance),mat(mat){}
 
-tile::tile(short x,short y,short z,material* mat):
-	x(x),y(y),z(z),mat(mat),hp(100){}
+tiletype::~tiletype(){}
+
+material* tiletype::GetMat(){	return mat;}
+char tiletype::GetImg(){	return img;}
+double tiletype::GetChance(){	return dropchance;}
+
+tile::tile(short x,short y,short z,tiletype* idea):
+	x(x),y(y),z(z),idea(idea),hp(100){}
+
+tile::~tile(){};
 
 void tile::GetDamage(short dmg){
 	hp-=dmg;
 }
 
-std::string tile::GetName(){	return mat->GetName();}
-bool tile::GetPass(){		return mat->GetPass();}
-bool tile::IsSpace(){		return (mat->GetPass())?true:false;}
+std::string tile::GetName(){	return idea->GetMat()->GetName();}
+bool tile::GetPass(){		return idea->GetMat()->GetPass();}
+bool tile::IsSpace(){		return (idea->GetMat()->GetPass())?true:false;}
 creature* tile::GetCreature(){	return (GetPass()&&cr!=NULL)?cr:NULL;}
 item* tile::GetItem(){		return (GetPass()&&it!=NULL)?it:NULL;}
 short tile::GetHp(){		return hp;}
@@ -32,6 +41,6 @@ char tile::GetChar(){
 			return it->GetImg();
 		return ' ';
 	}else{
-		return mat->GetChar();
+		return idea->GetImg();
 	}
 }

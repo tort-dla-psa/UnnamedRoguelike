@@ -4,15 +4,26 @@
 #include"material.h"
 class creature;
 class item;
-class tile{
-	short x,y,z;
+class tiletype{
+	char img;
+	double dropchance;
 	material* mat;
+public:
+	tiletype(char img, double dropchance, material* mat);
+	~tiletype();
+	material* GetMat();
+	char GetImg();
+	double GetChance();
+};
+class tile{
+	tiletype* idea;
+	short x,y,z;
 	short hp;
 	creature* cr;
 	item* it;
 public:
 	tile(short x, short y, short z);
-	tile(short x, short y, short z, material* mat);
+	tile(short x, short y, short z, tiletype* idea);
 	~tile();
 	void GetDamage(short dmg);
 	std::string GetName();
