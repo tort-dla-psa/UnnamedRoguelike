@@ -17,6 +17,7 @@ class engine{
 	creature* player;
 	camera* cam;
 	interface* win;
+	std::vector<tiletype*> tiletypes;
 	std::vector<material*> materials;
 	std::vector<item*> items;
 	std::vector<creature*> creatures;

@@ -1,18 +1,18 @@
 #ifndef map_h
 #define map_h
 #include<vector>
+#include<string>
 #include"tile.h"
-#include"material.h"
 class creature;
 class map{
 	short width,height,depth;
 protected:
 	tile****tiles;
-	material* air;
-	material* surfstone;
-	material* midstone;
-	material* deepstone;
-	material* borderstone;
+	tiletype* air;
+	tiletype* surfstone;
+	tiletype* midstone;
+	tiletype* deepstone;
+	tiletype* borderstone;
 public:
 	map(short a, short b, short c);
 	~map();
@@ -24,8 +24,9 @@ public:
 	short GetDepth();	
 };
 class Perlin: public map{
+	tiletype* findtile(std::string name, std::vector<tiletype*> tiletypes);
 public:
-	Perlin(short width, short height, short depth, std::vector<material*> mats);
+	Perlin(short width, short height, short depth, std::vector<tiletype*> tiletypes);
 };
 class camera{
 	creature* cr;

@@ -49,14 +49,19 @@ short map::GetWidth(){	return width;}
 short map::GetHeight(){	return height;}
 short map::GetDepth(){	return depth;}
 
-Perlin::Perlin(short w, short h, short d, std::vector<material*> mats):map(w,h,d){
-	air = mats[0];
-	if(!air->GetPass())
-		return;
-	surfstone = mats[1];
-	midstone = mats[2];
-	deepstone = mats[3];
-	borderstone = mats[4];
+tiletype* Perlin::findtile(std::string name, std::vector<tiletype*>tiletypes){
+	for(auto &element:tiletypes){
+		if(element->GetMat()->GetName()==name)
+			return element;
+	}
+	return NULL;
+}
+Perlin::Perlin(short w, short h, short d, std::vector<tiletype*> tiletypes):map(w,h,d){
+	air = findtile("air",tiletypes);
+	surfstone = findtile("dirt",tiletypes);
+	midstone = findtile("granite",tiletypes);
+	deepstone = findtile("marble",tiletypes);
+	borderstone = findtile("borderstone",tiletypes);
 	FastNoise noiseHeight,noiseBiome,noiseCavesMain,noiseCavesSecond;
 	noiseHeight.SetNoiseType(FastNoise::PerlinFractal);
 	noiseHeight.SetSeed(rand()%10000);
