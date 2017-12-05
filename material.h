@@ -4,34 +4,30 @@
 class material{
 	short density;
 	short value;
-	short id;
 	short meltingpoint;
 	std::string name;
-	char img;
 public:
-	material(char img,short density, short value, short meltingpoint, std::string name, short id);
+	material(short density, short value, short meltingpoint, std::string name);
 	~material();
 	short GetDensity();
 	short GetValue();
-	short GetId();
 	short GetMeltingPoint();
 	std::string GetName();
 	virtual bool GetPass();
-	char GetChar();
 };
 class gasMAT:public material{
 public:
-	gasMAT(char img,short density, short value, std::string name, short id);
+	gasMAT(short density, short value, std::string name);
 	bool GetPass() override;
 };
 class stoneMAT:public material{
 public:
-	stoneMAT(char img,short density, short value, short meltingpoint, std::string name, short id);
+	stoneMAT(short density, short value, short meltingpoint, std::string name);
 };
 class organicMAT:public material{
-	organicMAT(short density, short value, short meltingpoint, std::string name, short id);
+	organicMAT(short density, short value, short meltingpoint, std::string name);
 };
 class metalMAT:public material{
-	metalMAT(short density, short value, short meltingpoint, std::string name, short id);
+	metalMAT(short density, short value, short meltingpoint, std::string name);
 };
 #endif

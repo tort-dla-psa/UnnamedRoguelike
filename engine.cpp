@@ -10,6 +10,7 @@ engine::engine(){
 	srand(time(NULL));
 
 	materials = FileOperations::LoadMaterials();
+	tiletypes = FileOperations::LoadTiles(materials);
 	CreatePerlinMap();
 	AddCreature("Adam",'T',10,1,0,0,0);
 	AddCreature("Eve",'i',10,1,1,1,1);
@@ -34,7 +35,7 @@ engine::~engine(){
 	materials.clear();
 }
 
-void engine::CreatePerlinMap(){	mp = new Perlin(100,100,50,materials);}
+void engine::CreatePerlinMap(){	mp = new Perlin(100,100,50,tiletypes);}
 void engine::drawrecurse(short x, short y, short z, short iter, short max){
 	tile* temp = mp->GetTile(x+cam->GetOffsetX(),y+cam->GetOffsetY(),z);
 	if(iter>=max){

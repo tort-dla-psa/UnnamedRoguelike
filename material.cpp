@@ -1,53 +1,39 @@
 #include "material.h"
-material::material(	char img,
-			short density,
+material::material(	short density,
 			short value,
 			short meltingpoint,
-			std::string name,
-			short id):
-	img(img),
+			std::string name):
 	density(density),
 	value(value),
 	meltingpoint(meltingpoint),
-	name(name),
-	id(id)
+	name(name)
 {}
 
 material::~material(){}
 
 short material::GetDensity(){	return density;}
 short material::GetValue(){	return value;}
-short material::GetId(){	return id;}
 short material::GetMeltingPoint(){	return meltingpoint;}
 bool material::GetPass(){	return false;}
 std::string material::GetName(){return name;}
-char material::GetChar(){	return img;}
 
-gasMAT::gasMAT(		char img,
-			short density,
+gasMAT::gasMAT(		short density,
 			short value,
-			std::string name,
-			short id):
-	material(	img,
-			density,
+			std::string name):
+	material(	density,
 			value,
 			-1,
-			name,
-			id)
+			name)
 {}
 
 bool gasMAT::GetPass(){	return true;}
 
-stoneMAT::stoneMAT(	char img,
-			short density,
+stoneMAT::stoneMAT(	short density,
 			short value,
 			short meltingpoint,
-			std::string name,
-			short id):
-	material(	img,
-			density,
+			std::string name):
+	material(	density,
 			value,
 			meltingpoint,
-			name,
-			id)
+			name)
 {}
