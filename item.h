@@ -13,9 +13,9 @@ class item{
 	tile* place;
 	material* materia;
 	std::string quality;
+	std::string name;
 public:
-	item();
-	item(char img, short volume, short sharpness, material* materia);
+	item(std::string name, char img, short volume, short sharpness, material* materia);
 	~item();
 	void SetQuality(std::string quality);
 	void SetRarity(short rarity);
@@ -25,6 +25,7 @@ public:
 	void Move(tile* newplace);
 	void Move(creature* newholder);
 	std::string GetQuality();
+	std::string GetName();
 	char GetImg();
 	short GetX();
 	short GetY();

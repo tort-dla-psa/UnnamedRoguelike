@@ -3,17 +3,9 @@
 #include "material.h"
 #include "item.h"
 #include <ncurses.h>
-item::item(){
-	place=0;
-	volume=0;
-	rarity=0;
-	owner=NULL;
-	holder=NULL;
-	place=NULL;
-}
-
-item::item(char img, short volume, short sharpness, material* materia):
-	img(img),volume(volume),sharpness(sharpness),materia(materia)
+#include <string>
+item::item(std::string name,char img, short volume, short sharpness, material* materia):
+	name(name),img(img),volume(volume),sharpness(sharpness),materia(materia)
 {
 	owner=NULL;
 	holder=NULL;
@@ -52,6 +44,7 @@ void item::SetRarity(short rarity){		this->rarity = rarity;}
 void item::SetPrice(short price){		this->price = price;}
 
 std::string item::GetQuality(){	return quality;}
+std::string item::GetName(){	return name;}
 char item::GetImg(){		return img;}
 short item::GetX(){		return place->GetX();}
 short item::GetY(){		return place->GetY();}
