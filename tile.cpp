@@ -3,12 +3,13 @@
 #include "item.h"
 #include <ncurses.h>
 
-tiletype::tiletype(char img, double dropchance, material* mat):
-	img(img),dropchance(dropchance),mat(mat){}
+tiletype::tiletype(char img, double dropchance, item* ore, material* mat):
+	img(img),dropchance(dropchance),ore(ore),mat(mat){}
 
 tiletype::~tiletype(){}
 
 material* tiletype::GetMat(){	return mat;}
+item* tiletype::GetOre(){	return ore;}
 char tiletype::GetImg(){	return img;}
 double tiletype::GetChance(){	return dropchance;}
 
@@ -30,6 +31,8 @@ short tile::GetHp(){		return hp;}
 short tile::GetX(){		return x;}
 short tile::GetY(){		return y;}
 short tile::GetZ(){		return z;}
+material* tile::GetMat(){	return idea->GetMat();}
+item* tile::GetOre(){		return idea->GetOre();}
 void tile::PlaceCreature(creature* target){	cr=(GetPass())?target:NULL;}
 void tile::PlaceItem(item* target){		it=(GetPass())?target:NULL;}
 

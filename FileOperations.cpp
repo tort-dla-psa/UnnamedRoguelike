@@ -4,13 +4,58 @@
 #include<vector>
 #include<ncurses.h>
 namespace FileOperations{
-	static std::vector<tiletype*> LoadTiles(std::vector<material*> materials){
-		std::vector<tiletype*> tiles;
-		std::ifstream tilesfile("raws/tiles/tiles.raw");
-		std::string temptype="";
-		std::string val="";
+	static std::vector<item*> LoadOres(std::vector<material*> materials){
+		std::vector<item*> ores;
+		std::ifstream oresfile("raws/items/ores/ores.raw");
+		std::string temptype="none";
+		std::string val="none";
+		std::string name="none";
 		char img='@';
 		material* mat = NULL;
+		for(std::string line; getline(oresfile,line);){
+			if(line=="["){
+				continue;
+			}
+			if(line=="]"){
+				printw("%c ",img);refresh();
+				ores.push_back(new item(name,img,50,0,mat));
+				img='@';
+				mat=NULL;
+				temptype="none";
+				val="none";
+				name="none";
+				continue;
+			}
+			short pos = line.find(":");
+			temptype = line.substr(0,pos);
+			val = line.substr(pos+1);
+			if(temptype=="img"){
+				img=val[0];
+			}else if(temptype=="material"){
+				for (auto &element:materials){
+					if(element->GetName()==val)
+						mat=element;
+				}
+			}else if(temptype=="name"){
+				name=val;
+			}
+		}
+		printw("\n");
+		oresfile.close();
+		return ores;
+	}
+
+	static std::vector<tiletype*> LoadTiles(std::vector<material*> materials,
+						std::vector<item*> ores)
+	{
+		std::vector<tiletype*> tiles;
+		std::ifstream tilesfile("raws/tiles/tiles.raw");
+		std::string temptype="none";
+		std::string val="none";
+		std::string orename="none";
+		char img='@';
+		material* mat = NULL;
+		item* ore = NULL;
 		short dropchance=0;
 		for(std::string line; getline(tilesfile,line);){
 			if(line=="["){
@@ -18,9 +63,10 @@ namespace FileOperations{
 			}
 			if(line=="]"){
 				printw("%c ",img);refresh();
-				tiles.push_back(new tiletype(img,dropchance,mat));
+				tiles.push_back(new tiletype(img,dropchance,ore,mat));
 				img='@';
 				mat=NULL;
+				ore=NULL;
 				dropchance=0;
 				continue;
 			}
@@ -36,7 +82,14 @@ namespace FileOperations{
 				}
 			}else if(temptype=="dropchance"){
 				dropchance=std::stoi(val);
+			}else if(temptype=="dropproduct"){
+				orename=val;
+				for(auto &element:ores){
+					if(element->GetName()==val)
+						ore=element;
+				}
 			}
+
 		}
 		printw("\n");
 		tilesfile.close();
