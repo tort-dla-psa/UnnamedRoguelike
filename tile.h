@@ -2,16 +2,19 @@
 #define tile_h
 #include<string>
 #include"material.h"
+#include"item.h"
 class creature;
 class item;
 class tiletype{
 	char img;
 	double dropchance;
 	material* mat;
+	item* ore;
 public:
-	tiletype(char img, double dropchance, material* mat);
+	tiletype(char img, double dropchance, item* ore, material* mat);
 	~tiletype();
 	material* GetMat();
+	item* GetOre();
 	char GetImg();
 	double GetChance();
 };
@@ -31,6 +34,7 @@ public:
 	bool GetPass();
 	bool IsSpace();
 	material* GetMat();
+	item* GetOre();
 	short GetDensity();
 	short GetMelting();
 	short GetX();

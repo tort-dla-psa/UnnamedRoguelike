@@ -8,12 +8,14 @@ dropchance:0
 img:_
 material:dirt
 dropchance:0.10
+dropproduct:dirt
 ]
 
 [
 img:o
 material:granite
 dropchance:0.15
+dropproduct:granite stone
 ]
 
 [
