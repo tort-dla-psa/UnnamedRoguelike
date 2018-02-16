@@ -1,6 +1,16 @@
 #include"engine.h"
 #include"FileOperations.cpp"
 
+void ShowTiletypes(std::vector<tile*> tiletypes){
+	for(auto it:tiletypes){
+		printw("Char:%c \n",it->GetImg()); refresh();
+		printw("Name:%s \n",it->GetName().c_str()); refresh();
+		printw("Material:%s \n",it->GetMat()->GetName().c_str()); refresh();
+		printw("IsSpace:%d \n",(it->IsSpace())?1:0); refresh();
+		printw("Ore:%s \n\n",it->GetOre()->GetName().c_str()); refresh();
+	}
+}
+
 engine::engine(){
 	win = new interface();
 	if(has_colors()==false){
@@ -11,12 +21,21 @@ engine::engine(){
 
 	materials = FileOperations::LoadMaterials();
 	oreideas = FileOperations::LoadOres(materials);
-	tileideas= FileOperations::LoadTiles(materials,oreideas);
-	CreatePerlinMap();
-	AddCreature("Adam",'T',10,1,0,0,0);
-	AddCreature("Eve",'i',10,1,1,1,1);
-	CreateItem('0',1,1, materials[0],1,0,0);
-	CreateItem('1',2,2, materials[1],2,0,0);
+	tileideas = FileOperations::LoadTiles(oreideas);
+	ShowTiletypes(tileideas);
+	getch();
+	mp = new Perlin(100,100,50,tileideas);
+	pathfinder = new generator();
+	AddCreature("Adam",'T',10,1,0,1,0);
+	AddCreature("Eve",'i',10,1,1,1,0);
+	CreateItem('0',materials[0],1,0,0);
+	CreateItem('1',materials[1],2,0,0);
+	DoGravity();
+	tile* destignation = mp->FindTileOnVertical(25,12);
+
+	tile* start = (tile*)creatures[1]->GetPlace();
+	std::vector<tilewspace*> path = pathfinder->FindPath(mp,start,destignation); 
+	creatures[1]->SetPath(path);
 }
 
 engine::~engine(){
@@ -36,17 +55,22 @@ engine::~engine(){
 	materials.clear();
 }
 
-void engine::CreatePerlinMap(){	mp = new Perlin(100,100,50,tileideas);}
-void engine::drawrecurse(short x, short y, short z, short iter, short max){
+void engine::drawrecurse(ushort x, ushort y, ushort z, ushort iter, ushort max){
 	tile* temp = mp->GetTile(x+cam->GetOffsetX(),y+cam->GetOffsetY(),z);
-	if(iter>=max){
+	if(iter>=max||!temp){
 		win->DrawOnMap(x,y,'.',1+iter);
 		return;
 	}
-	if(!temp->IsSpace()||temp->GetCreature()||temp->GetItem()){
-		win->DrawOnMap(x,y,temp->GetChar(),1+iter);
-	}else
+	if(temp->IsSpace()){
+		tilewspace* temp2 = (tilewspace*) temp;
+		if(temp2->HasObjects()){
+			win->DrawOnMap(x,y,temp->GetImg(),1+iter);
+			return;
+		}
 		drawrecurse(x,y,z+1,iter+1,max);
+	}else{
+		win->DrawOnMap(x,y,temp->GetImg(),1+iter);
+	}
 }
 void engine::DrawMap(){
 	short camZ = cam->GetZ();
@@ -67,40 +91,49 @@ void engine::DrawMap(){
 		}
 		addch('\n');
 	}
+	for(auto it:items){
+		it->GetName();
+	}
 }
 
 void engine::DoGravity(){
-	for (auto &i:creatures){
-		short x = i->GetX();
-		short y = i->GetY();
-		short z = i->GetZ()+1;
+	for (auto i:creatures){
+		if(i->GetPlace()==NULL)
+			continue;
+		ushort x = i->GetX();
+		ushort y = i->GetY();
+		ushort z = i->GetZ()+1;
 		tile* tilebelow = mp->GetTile(x,y,z);
-		while(tilebelow->IsSpace()){
-			if(tilebelow->GetCreature()==NULL){
-				i->Move(tilebelow);
-				tilebelow = mp->GetTile(x,y,++z);
-			}else break;
+		if(!tilebelow->IsSpace())
+			return;
+		while(tilebelow && tilebelow->IsSpace()){
+			tilebelow = mp->GetTile(x,y,++z);
 		}
+		tilebelow = mp->GetTile(x,y,--z);
+		i->Move((tilewspace*)tilebelow);
 	}
-	for (auto &i:items){
+	for (auto i:items){
 		if(i->GetPlace()==NULL)
 			continue;
 		short x = i->GetX();
 		short y = i->GetY();
 		short z = i->GetZ()+1;
 		tile* tilebelow = mp->GetTile(x,y,z);
-		while(tilebelow->IsSpace()){
-			i->Move(tilebelow);
+		if(!tilebelow->IsSpace())
+			return;
+		while(tilebelow && tilebelow->IsSpace()){
 			tilebelow = mp->GetTile(x,y,++z);
 		}
+		tilebelow = mp->GetTile(x,y,--z);
+		i->Move((tilewspace*)tilebelow);
 	}
 }
 
-creature* engine::AddCreature(std::string name, char img, short hp, short dp, short x, short y, short z){
+creature* engine::AddCreature(std::string name, char img, ushort hp, ushort dp, ushort x, ushort y, ushort z){
 	tile* temptile = mp->GetTile(x,y,z);
 	if(temptile->IsSpace()){
 		creature* temp = new creature(name, img, hp, dp);
-		temp->Move(temptile);
+		temp->Move((tilewspace*)temptile);
 		creatures.push_back(temp);
 		if(creatures.size()==1){
 			player = temp;
@@ -118,15 +151,15 @@ void engine::DelCreature(creature* cr){
 void engine::MovePlayer(char ch){
 	short* dirs = GetDir(ch);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
-	if(mp->GetTile(x,y,z)->IsSpace()){
-		tile* temptile = mp->GetTile(x,y,z);
-		if(temptile->GetCreature()==NULL)
-			player->Move(temptile);
+	tile* temptile = mp->GetTile(x,y,z);
+	if(!temptile)	
+		return;
+	if(temptile->IsSpace()){
+		player->Move((tilewspace*)temptile);
 	}else{
 		tile* temptile = mp->GetTile(x,y,z-1);
-		if(temptile!=NULL&&temptile->IsSpace()){
-			if(temptile->GetCreature()==NULL)
-				player->Move(temptile);
+		if(temptile && temptile->IsSpace()){
+			player->Move((tilewspace*)temptile);
 		}
 	}
 	delete[] dirs;
@@ -135,7 +168,7 @@ void engine::MoveCam(char ch){
 	short* dirs = GetDir(ch);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
-	cam->GoToPlace(temptile);
+	cam->Follow(temptile);
 	delete[] dirs;
 }
 void engine::PerformAttack(char ch){
@@ -143,7 +176,7 @@ void engine::PerformAttack(char ch){
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
 	if(temptile->IsSpace()){
-		creature* temp = temptile->GetCreature();
+		/*creature* temp = (temptile->GetCreatures())[0];
 		if(temp!=NULL){
 			if(temp!=player){
 				short dp = player->Attack(temp);
@@ -151,34 +184,39 @@ void engine::PerformAttack(char ch){
 				if(temp->GetHp()<1)
 					DelCreature(temp);
 			}
-		}else{
+		}else{*/
 			tile* temptile = mp->GetTile(x,y,z+1);
 			if(!temptile->IsSpace() && temptile->GetHp()>-1){
-				short dp = player->Dig(temptile);
+				short dp = player->Attack(temptile);
 				WriteLog(temptile, dp);
 				if(temptile->GetHp()<1)
 					mp->DelTile(temptile);
 			}
-		}
+		//}
 	}else if(!temptile->IsSpace() && temptile->GetHp()!=-10){
-		short dp = player->Dig(temptile);
+		short dp = player->Attack(temptile);
 		WriteLog(temptile, dp);
-		if(temptile->GetHp()<1)
+		if(temptile->GetHp()<1){
+			item* oreidea = temptile->GetOre();
+			short x = temptile->GetX();
+			short y = temptile->GetY();
+			short z = temptile->GetZ();
 			mp->DelTile(temptile);
+		}
 	}
 	delete[] dirs;
 }
 
-item* engine::CreateItem(char img, short volume, short sharpness, material* materia){
-	item* temp = new item("generic",img,volume,sharpness,materia);
+item* engine::CreateItem(char img, material* materia){
+	item* temp = new item("generic",img,materia);
 	items.push_back(temp);
 	return temp;
 }
-item* engine::CreateItem(char img, short volume, short sharpness, material* materia,  short x, short y, short z){
+item* engine::CreateItem(char img, material* materia,  ushort x, ushort y, ushort z){
 	tile* temptile = mp->GetTile(x,y,z);
-	if(temptile->IsSpace()){
-		item* tempitem = CreateItem(img,volume,sharpness,materia);
-		tempitem->Move(temptile);
+	if(temptile && temptile->IsSpace()){
+		item* tempitem = CreateItem(img,materia);
+		tempitem->Move((tilewspace*)temptile);
 		return tempitem;
 	}
 	return NULL;
@@ -189,18 +227,14 @@ void engine::PickUp(char ch){
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
 	if(temptile->IsSpace()){
-		item* tempitem = temptile->GetItem();
+		tilewspace* temptile2 = (tilewspace*) temptile;
+		gameobjectmovable* tempitem = (temptile2->GetObjects())[0];
 		if(tempitem!=NULL){
 			tempitem->Move(player);
-			if(!player->PickUp(tempitem))
-				WriteLog("Inventory full");
+			//full inventory
 		}
 	}
 	delete[] dirs;
-}
-
-void engine::Drop(){
-	player->Drop(0,player->GetPlace());
 }
 
 void engine::DelItem(item* it){
@@ -211,7 +245,7 @@ void engine::DelItem(item* it){
 void engine::HandleKey(char ch){
 	if(ch=='0'){
 		win->SetInventoryFocus(false);
-		cam->FollowCreature(player);
+		cam->Follow(player);
 		return;
 	}
 	if(win->GetInventoryFocus()){
@@ -253,20 +287,20 @@ void engine::HandleKey(char ch){
 			PickUp(ch);
 		}else if(ch=='I'){
 			win->SetInventoryFocus(true);
-			cam->FollowCreature(player);
+			cam->Follow(player);
 		}else if(ch=='C'){
 			win->SetChatFocus(true);
 		}else if(ch=='l'){
-			cam->GoToPlace(player->GetPlace());
+			cam->Follow(player->GetPlace());
 		}
 	}else{
 		if(ch=='w'||ch=='a'||ch=='s'||ch=='d'||ch=='>'||ch=='<'){
 			MoveCam(ch);
 		}else if(ch==27||ch=='l'){
-			cam->FollowCreature(player);
+			cam->Follow(player);
 		}else if(ch=='i'){
 			win->SetInventoryFocus(true);
-			cam->FollowCreature(player);			
+			cam->Follow(player);			
 		}else if(ch=='C'){
 			win->SetChatFocus(true);
 		}
@@ -283,6 +317,7 @@ void engine::MainLoop(){
 		win->Draw();
 		char ch = getch();
 		HandleKey(ch);
+		creatures[1]->FollowPath();
 		if(ch=='0')
 			break;
 		DoGravity();
@@ -314,11 +349,11 @@ short* engine::GetDir(char ch){
 void engine::WriteLog(std::string mes){
 	win->WriteToChat(mes);
 }
-void engine::WriteLog(tile* place, short dp){
+void engine::WriteLog(tile* place, ushort dp){
 	std::string mes = "You hit "+place->GetName()+", "+std::to_string(dp)+" dp";
 	win->WriteToChat(mes);
 }
-void engine::WriteLog(creature* target, short dp){
+void engine::WriteLog(creature* target, ushort dp){
 	std::string mes = "You hit "+target->GetName()+"("+target->GetImg()+") , "+std::to_string(dp)+" dp";
 	win->WriteToChat(mes);
 }
