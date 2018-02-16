@@ -1,49 +1,88 @@
 #include "tile.h"
 #include "creature.h"
 #include "item.h"
+#include "material.h"
 #include <ncurses.h>
+#include <algorithm>
 
-tiletype::tiletype(char img, double dropchance, item* ore, material* mat):
-	img(img),dropchance(dropchance),ore(ore),mat(mat){}
+tile::tile(ushort x, ushort y, ushort z):
+	gameobjectstatic(x,y,z){}
 
-tiletype::~tiletype(){}
+tile::tile(ushort x, ushort y, ushort z, tile* sample):
+	gameobjectstatic(x, y, z)
+{
+	SetName(sample->GetName());
+	SetOre(sample->GetOre());
+	SetMat(sample->GetMat());
+	SetImg(sample->GetImg());
+	SetHp(100);
+	vect3i sizes { 100, 100, 100 };
+	SetSizes(sizes);
+	this->dropchance = sample->GetChance();
+}
 
-material* tiletype::GetMat(){	return mat;}
-item* tiletype::GetOre(){	return ore;}
-char tiletype::GetImg(){	return img;}
-double tiletype::GetChance(){	return dropchance;}
-
-tile::tile(short x,short y,short z,tiletype* idea):
-	x(x),y(y),z(z),idea(idea),hp(100){}
+tile::tile(char img, std::string name, double dropchance, item* ore):
+	gameobjectstatic()
+{
+	vect3i sizes { 100, 100, 100 };
+	this->dropchance = dropchance;
+	SetSizes(sizes);
+	SetImg(img);
+	SetName(name);
+	SetOre(ore);
+	SetMat(ore->GetMat());
+}
 
 tile::~tile(){};
 
-void tile::GetDamage(short dmg){
-	hp-=dmg;
+bool tile::IsSpace(){	return false;}
+void tile::SetOre(item* ore){	this->ore = ore;}
+item* tile::GetOre(){	return ore;}
+double tile::GetChance(){	return dropchance;}
+char tile::GetImg(){	return img;}
+
+tilewspace::tilewspace(ushort x, ushort y, ushort z, tilewspace* sample):
+	tile(x, y, z)
+{
+	SetName(sample->GetName());
+	SetOre(sample->GetOre());
+	SetMat(sample->GetMat());
+	SetImg(sample->GetImg());
+	SetHp(100);
+	vect3i sizes { 100, 100, 100 };
+	SetSizes(sizes);
+	this->dropchance = 0;
 }
 
-std::string tile::GetName(){	return idea->GetMat()->GetName();}
-bool tile::GetPass(){		return idea->GetMat()->GetPass();}
-bool tile::IsSpace(){		return (idea->GetMat()->GetPass())?true:false;}
-creature* tile::GetCreature(){	return (GetPass()&&cr!=NULL)?cr:NULL;}
-item* tile::GetItem(){		return (GetPass()&&it!=NULL)?it:NULL;}
-short tile::GetHp(){		return hp;}
-short tile::GetX(){		return x;}
-short tile::GetY(){		return y;}
-short tile::GetZ(){		return z;}
-material* tile::GetMat(){	return idea->GetMat();}
-item* tile::GetOre(){		return idea->GetOre();}
-void tile::PlaceCreature(creature* target){	cr=(GetPass())?target:NULL;}
-void tile::PlaceItem(item* target){		it=(GetPass())?target:NULL;}
+tilewspace::tilewspace(char img, std::string name, item* ore):
+	tile(img,name,0,ore){};
 
-char tile::GetChar(){
-	if(GetPass()){
-		if(cr!=NULL)
-			return cr->GetImg();
-		if(it!=NULL)
-			return it->GetImg();
-		return ' ';
-	}else{
-		return idea->GetImg();
+tilewspace::~tilewspace(){};
+
+bool tilewspace::IsSpace(){	return true;}
+
+void tilewspace::RemoveObject(gameobjectmovable* target){
+	for(auto it:objects){
+		if(it==target){
+			objects.erase(std::find(objects.begin(),objects.end(),it),objects.end());
+		}
 	}
+}
+
+void tilewspace::AddObject(gameobjectmovable* target){
+	objects.push_back(target);
+}
+
+ushort tilewspace::GetObjectsCount(){	return objects.size();}
+bool tilewspace::HasObjects(){	return !objects.empty();}
+
+std::vector<gameobjectmovable*> tilewspace::GetObjects(){
+	return objects;
+}
+
+char tilewspace::GetImg(){
+	if(HasObjects()){
+		return objects.back()->GetImg();
+	}
+	return img;
 }

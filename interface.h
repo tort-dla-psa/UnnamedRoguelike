@@ -40,6 +40,7 @@ protected:
 	bool updated;
 	bool focused;
 	WINDOW* win;
+	myColor* fg;
 public:
 	window(short width, short height);
 	~window();

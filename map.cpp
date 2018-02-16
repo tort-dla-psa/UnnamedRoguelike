@@ -1,24 +1,27 @@
 #include<ncurses.h>
+#include<random>
 #include"map.h"
 #include"creature.h"
 #include"FastNoise.h"
+#include"material.h"
 
-map::map(short a, short b, short c):
-	width(a),height(b),depth(c)
+map::map(ushort width, ushort height, ushort depth):
+	width(width),height(height),depth(depth)
 {
-	tiles = new tile***[c];
-	for(short z=0; z<c; z++){
-		tiles[z] = new tile**[a];
-		for(short x=0; x<a; x++){
-			tiles[z][x] = new tile*[b];
+	tiles = new tile***[depth];
+	for(ushort z=0; z<depth; z++){
+		tiles[z] = new tile**[width];
+		for(ushort x=0; x<width; x++){
+			tiles[z][x] = new tile*[height];
 		}
 	}
 }
+
 map::~map(){
-	for(short i=0; i<depth; i++){
-		for(short x=0; x<width; x++){
-			for(short y=0; y<height ;y++){
-				if(tiles[i][x][y]!=NULL)
+	for(ushort i=0; i<depth; i++){
+		for(ushort x=0; x<width; x++){
+			for(ushort y=0; y<height ;y++){
+				if(tiles[i][x][y]!=nullptr)
 					delete tiles[i][x][y];
 			}
 			delete[] tiles[i][x];
@@ -27,55 +30,101 @@ map::~map(){
 	}
 	delete[] tiles;
 }
-tile* map::GetTile(short a, short b, short c){
-	if(c<0 || c>=depth)
-		return NULL;
-	return tiles[c][a][b];
-}
-void map::DelTile(tile*target){
-	short x = target->GetX();
-	short y = target->GetY();
-	short z = target->GetZ();
 
-	delete tiles[z][x][y];	
-	tiles[z][x][y] = new tile(x,y,z,air);
-}
-void map::DelTile(short a, short b, short c){
-	delete (tiles[c][a][b]);
-	tiles[c][a][b] =  new tile(a,b,c,air);
+tile* map::GetTile(ushort x, ushort y, ushort z){
+	if(	z<0 || z>=depth || 
+		x<0 || x>=width ||
+		y<0 || y>=height)
+		return nullptr;
+	if(tiles[z][x][y]->IsSpace())
+		return (tilewspace*) tiles[z][x][y];
+	return tiles[z][x][y];
 }
 
-short map::GetWidth(){	return width;}
-short map::GetHeight(){	return height;}
-short map::GetDepth(){	return depth;}
+void map::DelTile(tile* target){
+	ushort x = target->GetX();
+	ushort y = target->GetY();
+	ushort z = target->GetZ();
+	item* ore = target->GetOre();
+	double dropchance = target->GetChance();
+	delete target;
+	tiles[z][x][y] = new tilewspace(x,y,z,(tilewspace*)air);
+	tilewspace* temp = (tilewspace*)tiles[z][x][y];
+	if(dropchance>=10.0/(10+rand()%90))
+		temp->AddObject((gameobjectmovable*)ore);
+}
 
-tiletype* Perlin::findtile(std::string name, std::vector<tiletype*>tiletypes){
-	for(auto &element:tiletypes){
+void map::DelTile(ushort x, ushort y, ushort z){
+	item* ore = tiles[z][x][y]->GetOre();
+	double dropchance = tiles[z][x][y]->GetChance();
+	delete tiles[z][x][y];
+	tiles[z][x][y] = new tilewspace(x,y,z,(tilewspace*)air);
+	tilewspace* temp = (tilewspace*)tiles[z][x][y];
+	if(dropchance>=10.0/(10+rand()%90))
+		temp->AddObject((gameobjectmovable*)ore);
+}
+
+tile* map::FindTileOnVertical(ushort x, ushort y){
+	ushort z=0;
+	tile* temp;
+	while(z<depth){
+		temp = GetTile(x,y,z);
+		if(!temp->IsSpace()){
+			return GetTile(x,y,z-1);
+		}else{
+			z++;
+		}
+	}
+	return nullptr;
+}
+
+ushort map::GetWidth(){		return width;}
+ushort map::GetHeight(){	return height;}
+ushort map::GetDepth(){		return depth;}
+
+tile* Perlin::FindTile(std::string name, std::vector<tile*>tiletypes){
+	for(auto element:tiletypes){
 		if(element->GetMat()->GetName()==name)
 			return element;
 	}
-	return NULL;
+	return nullptr;
 }
-Perlin::Perlin(short w, short h, short d, std::vector<tiletype*> tiletypes):map(w,h,d){
-	air = findtile("air",tiletypes);
-	surfstone = findtile("dirt",tiletypes);
-	midstone = findtile("granite",tiletypes);
-	deepstone = findtile("marble",tiletypes);
-	borderstone = findtile("borderstone",tiletypes);
+
+tile* Perlin::PickRand(std::vector<tile*> tiletypes){
+	std::random_device rd;
+	std::mt19937 eng(rd());
+	std::uniform_int_distribution<> distr(2, tiletypes.size()-1);
+	return tiletypes[distr(eng)];
+}
+
+Perlin::Perlin(ushort w, ushort h, ushort d, std::vector<tile*> tiletypes):map(w,h,d){
+	air = FindTile("air",tiletypes);
+	borderstone = FindTile("borderstone",tiletypes);
+	/*
+	surfstone.push_back(PickRand(tiletypes));
+	printw("surf:%s\n",surfstone.back()->GetName().c_str()); refresh();
+	midstone.push_back(PickRand(tiletypes));
+	printw("mid:%s\n",midstone.back()->GetName().c_str()); refresh();
+	deepstone.push_back(PickRand(tiletypes));
+	printw("deep:%s\n",deepstone.back()->GetName().c_str()); refresh();
+	*/
+	tile* temp = FindTile("dirt",tiletypes);
+	surfstone.push_back(temp);
+	midstone.push_back(temp);
+	deepstone.push_back(temp);
 	FastNoise noiseHeight,noiseBiome,noiseCavesMain,noiseCavesSecond;
 	noiseHeight.SetNoiseType(FastNoise::PerlinFractal);
-	noiseHeight.SetSeed(rand()%10000);
+	noiseHeight.SetSeed(rand()%65000);
 	noiseBiome.SetNoiseType(FastNoise::Perlin);
-	noiseBiome.SetSeed(rand()%10000);
+	noiseBiome.SetSeed(rand()%65000);
 	noiseCavesMain.SetNoiseType(FastNoise::SimplexFractal);
-	noiseCavesMain.SetSeed(rand()%10000);
+	noiseCavesMain.SetSeed(rand()%65000);
 	noiseCavesSecond.SetNoiseType(FastNoise::SimplexFractal);
-	noiseCavesSecond.SetSeed(rand()%10000);
+	noiseCavesSecond.SetSeed(rand()%65000);
 	float heightMap[w][h];
 	//float biomeMap[w][h];
-	short*** caveMap = new short**[d-1];
-	float cavemainchance=-1.0+2.0*0.20;
-	float cavesecondchance=-1.0+2.0*0.10;
+	float cavemainchance=0.0;
+	float cavesecondchance=0.0;
 	float mainNoise, secondNoise;
 	for (short x=0; x<w;x++){
 		for (short y=0; y<h;y++){
@@ -90,88 +139,87 @@ Perlin::Perlin(short w, short h, short d, std::vector<tiletype*> tiletypes):map(
 			short middepth = 1+rand()%3;
 			short bigdepth = middepth+d/3+rand()%3;
 			for(short z=1; z<tiledepth-middepth-bigdepth; z++){
-				tiles[d-1-z][x][y] = new tile(x,y,d-1-z,deepstone);
+				tiles[d-1-z][x][y] = new tile(x,y,d-1-z,deepstone[0]);
 			}
 			for(short z=tiledepth-middepth-bigdepth; z<tiledepth-middepth; z++){
-				tiles[d-1-z][x][y] = new tile(x,y,d-1-z,midstone);
+				tiles[d-1-z][x][y] = new tile(x,y,d-1-z,midstone[0]);
 			}
 			for(short z=tiledepth-middepth; z<tiledepth; z++){
-				tiles[d-1-z][x][y] = new tile(x,y,d-1-z,surfstone);
+				tiles[d-1-z][x][y] = new tile(x,y,d-1-z,surfstone[0]);
 			}
 			for(short z=tiledepth; z<d; z++){
-				tiles[d-1-z][x][y] = new tile(x,y,d-1-z,air);
+				tiles[d-1-z][x][y] = new tilewspace(x,y,d-1-z,(tilewspace*)air);
 			}
 		}
-	}
+	}/*
 	for(short z=0;z<d-1;z++){
-		caveMap[z] = new short*[w];
-			for(short x=0;x<w;x++){
-				caveMap[z][x] = new short[h];
-					for (short y=0; y<h ;y++){
-						mainNoise = noiseCavesMain.GetNoise(x,y,z);
-						secondNoise = noiseCavesSecond.GetNoise(x,y,z);
-						if(mainNoise<cavemainchance){
-							caveMap[z][x][y] = 0;
-							delete tiles[z][x][y];
-							tiles[z][x][y] = new tile(x,y,z,air);
-						}else if(secondNoise<cavesecondchance){
-							caveMap[z][x][y] = 0;
-							delete tiles[z][x][y];
-							tiles[z][x][y] = new tile(x,y,z,air);
-						}else{
-							caveMap[z][x][y] = 1;
-						}
-					}
+		for(short x=0;x<w;x++){
+			for (short y=0; y<h ;y++){
+				mainNoise = noiseCavesMain.GetNoise(x,y,z);
+				secondNoise = noiseCavesSecond.GetNoise(x,y,z);
+				if(mainNoise<cavemainchance){
+					delete tiles[z][x][y];
+					tiles[z][x][y] = new tile(x,y,z,air);
+				}else if(secondNoise<cavesecondchance){
+					delete tiles[z][x][y];
+					tiles[z][x][y] = new tile(x,y,z,air);
+				}
 			}
-	}
-	
-	for(short z=0; z<d-1; z++){
-		for(short x=0; x<w; x++){
-			delete[] caveMap[z][x];
 		}
-		delete[] caveMap[z];
-	}
-	delete[] caveMap;
+	}*/
 }
-camera::camera(creature* cr){
-	this->cr = cr;
-	place = NULL;
+
+camera::camera(gameobjectmovable* target){
+	targetmov = target;
+	targetstat = nullptr;
 }
-camera::camera(tile* place){
-	this->cr = cr;
-	cr = NULL;
+
+camera::camera(gameobjectstatic* target){
+	targetstat = target;
+	targetmov = nullptr;
 }
-camera::~camera(){
-	cr=NULL;
-	place=NULL;
+
+camera::~camera(){}
+
+void camera::SetParams(ushort width, ushort height){
+	this->width = width;
+	this->height=  height;
 }
-void camera::SetParams(short width, short height){
-	this->width=width;
-	this->height=height;
+
+ushort* camera::GetCoords(){
 }
-short* camera::GetCoords(){
-	if(cr)
-		return new short[3]{cr->GetX(),cr->GetY(),cr->GetZ()};
-	if(place)
-		return new short[3]{place->GetX(),place->GetY(),place->GetZ()};
+
+ushort camera::GetOffsetX(){
+	return GetX()-width/2;
 }
-short camera::GetOffsetX(){
-	return (cr)?	cr->GetX()-width/2:
-			place->GetX()-width/2;
+
+ushort camera::GetOffsetY(){
+	return GetY()-height/2;
 }
-short camera::GetOffsetY(){
-	return (cr)?	cr->GetY()-height/2:
-			place->GetY()-height/2;
+
+void camera::Follow(gameobjectmovable* newtarget){
+	targetmov = newtarget;
+	targetstat = nullptr;
 }
-void camera::FollowCreature(creature* target){
-	cr=target;
-	place = NULL;
+
+void camera::Follow(gameobjectstatic* newtarget){
+	targetstat = newtarget;
+	targetmov = nullptr;
 }
-void camera::GoToPlace(tile* target){
-	place = target;
-	cr = NULL;
+
+ushort camera::GetX(){
+	if(targetmov)
+		return targetmov->GetX();
+	return targetstat->GetX();
 }
-short camera::GetX(){	return (cr)?cr->GetX():place->GetX();}
-short camera::GetY(){	return (cr)?cr->GetY():place->GetY();}
-short camera::GetZ(){	return (cr)?cr->GetZ():place->GetZ();}
-bool camera::Flying(){	return (cr)?false:true;}
+ushort camera::GetY(){
+	if(targetmov)
+		return targetmov->GetY();
+	return targetstat->GetY();
+}
+ushort camera::GetZ(){
+	if(targetmov)
+		return targetmov->GetZ();
+	return targetstat->GetZ();
+}
+bool camera::Flying(){	return (targetstat);}

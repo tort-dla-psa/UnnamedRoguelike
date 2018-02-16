@@ -1,5 +1,6 @@
 #include "material.h"
 #include "tile.h"
+#include "item.h"
 #include<fstream>
 #include<vector>
 #include<ncurses.h>
@@ -17,8 +18,7 @@ namespace FileOperations{
 				continue;
 			}
 			if(line=="]"){
-				printw("%c ",img);refresh();
-				ores.push_back(new item(name,img,50,0,mat));
+				ores.push_back(new item(name,img,mat));
 				img='@';
 				mat=NULL;
 				temptype="none";
@@ -40,21 +40,18 @@ namespace FileOperations{
 				name=val;
 			}
 		}
-		printw("\n");
 		oresfile.close();
 		return ores;
 	}
 
-	static std::vector<tiletype*> LoadTiles(std::vector<material*> materials,
-						std::vector<item*> ores)
-	{
-		std::vector<tiletype*> tiles;
+	static std::vector<tile*> LoadTiles(std::vector<item*> ores){
+		std::vector<tile*> tiles;
 		std::ifstream tilesfile("raws/tiles/tiles.raw");
 		std::string temptype="none";
 		std::string val="none";
 		std::string orename="none";
+		std::string name = "none";
 		char img='@';
-		material* mat = NULL;
 		item* ore = NULL;
 		short dropchance=0;
 		for(std::string line; getline(tilesfile,line);){
@@ -62,10 +59,14 @@ namespace FileOperations{
 				continue;
 			}
 			if(line=="]"){
-				printw("%c ",img);refresh();
-				tiles.push_back(new tiletype(img,dropchance,ore,mat));
+				if(ore->GetMat()->GetPass()){
+					tiles.push_back(new tilewspace(img,name,ore));
+				}else{
+					tiles.push_back(new tile(img,name,dropchance,ore));
+				}
 				img='@';
-				mat=NULL;
+				name = "none";
+				orename = "none";
 				ore=NULL;
 				dropchance=0;
 				continue;
@@ -75,23 +76,18 @@ namespace FileOperations{
 			val = line.substr(pos+1);
 			if(temptype=="img"){
 				img=val[0];
-			}else if(temptype=="material"){
-				for (auto &element:materials){
-					if(element->GetName()==val)
-						mat=element;
-				}
+			}else if(temptype=="name"){
+				name=val;
 			}else if(temptype=="dropchance"){
 				dropchance=std::stoi(val);
 			}else if(temptype=="dropproduct"){
 				orename=val;
-				for(auto &element:ores){
+				for(auto element:ores){
 					if(element->GetName()==val)
 						ore=element;
 				}
 			}
-
 		}
-		printw("\n");
 		tilesfile.close();
 		return tiles;
 	}
@@ -110,13 +106,12 @@ namespace FileOperations{
 				continue;
 			}
 			if(line=="]"){
-				printw("%s ",name.c_str());refresh();
 				if(type=="gas"){
 					materials.push_back(new gasMAT(density,value,name));
 				}else{
 					materials.push_back(new stoneMAT(density,value,melting,name));
 				}
-				name="";
+				name="generic";
 				type="";
 				value=-1;
 				melting=-1;
@@ -138,8 +133,8 @@ namespace FileOperations{
 				density=std::stoi(val);
 			}
 		}
-		printw("\n");
 		stones.close();
 		return materials;
 	}
+
 };

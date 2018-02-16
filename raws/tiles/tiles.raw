@@ -1,31 +1,34 @@
 [
 img: 
-material:air
+name:air
 dropchance:0
-]
-
-[
-img:_
-material:dirt
-dropchance:0.10
-dropproduct:dirt
-]
-
-[
-img:o
-material:granite
-dropchance:0.15
-dropproduct:granite stone
-]
-
-[
-img:m
-material:marble
-dropchance:0.15
+dropproduct:air placeholder
 ]
 
 [
 img:@
-material:borderstone
+name:borderstone
 dropchance:0
+dropproduct:borderstone placeholder
+]
+
+[
+img:_
+name:dirt
+dropchance:0.10
+dropproduct:dirt pile
+]
+
+[
+img:o
+name:granite
+dropchance:0.15
+dropproduct:granite boulder
+]
+
+[
+img:m
+name:marble
+dropchance:0.15
+dropproduct:marble boulder
 ]

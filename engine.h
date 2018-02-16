@@ -6,30 +6,33 @@
 #include<time.h>
 #include<vector>
 #include<algorithm>
+#include"gameobject.h"
+#include"item.h"
+#include"creature.h"
 #include"tile.h"
 #include"map.h"
-#include"creature.h"
 #include"material.h"
-#include"item.h"
 #include"interface.h"
+#include"pathfinding.h"
+
 class engine{
 	map* mp;
 	creature* player;
 	camera* cam;
 	interface* win;
+	generator* pathfinder;
 	std::vector<material*> materials;
 	std::vector<item*> oreideas;
-	std::vector<tiletype*> tileideas;
 	std::vector<item*> items;
+	std::vector<tile*> tileideas;
 	std::vector<creature*> creatures;
-	void WriteLog(tile* place, short dp);
-	void WriteLog(creature* target, short dp);
+	void WriteLog(tile* place, ushort dp);
+	void WriteLog(creature* target, ushort dp);
 	void DelCreature(creature* cr);
-	item* CreateItem(char img, short volume, short sharpness, material* materia);
-	item* CreateItem(char img, short volume, short sharpness, material* materia, short x, short y, short z);
-	creature* AddCreature(std::string name, char img, short hp, short dp, short x, short y, short z);
+	item* CreateItem(char img, material* materia);
+	item* CreateItem(char img, material* materia, ushort x, ushort y, ushort z);
+	creature* AddCreature(std::string name, char img, ushort hp, ushort dp, ushort x, ushort y, ushort z);
 	void PickUp(char dir);
-	void Drop();
 	void DelItem(item* target);
 	void MovePlayer(char dir);
 	void MoveCam(char dir);
@@ -38,14 +41,10 @@ class engine{
 	void DoGravity();
 	void HandleKey(char ch);
 	short* GetDir(char ch);
-	void PrintTile(char ch,short y,short x,short color);
-	void PrintPlayerStat();
-	void PrintStat(item*cr);
-	void drawrecurse(short x, short y, short z, short iter, short max);
+	void drawrecurse(ushort x, ushort y, ushort z, ushort iter, ushort max);
 public:
 	engine();
 	~engine();
-	void CreatePerlinMap();
 	void MainLoop();
 	void WriteLog(std::string mes);
 };

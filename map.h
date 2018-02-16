@@ -2,49 +2,53 @@
 #define map_h
 #include<vector>
 #include<string>
+#include"gameobject.h"
 #include"tile.h"
-class creature;
 class map{
-	short width,height,depth;
+	ushort width,height,depth;
 protected:
 	tile****tiles;
-	tiletype* air;
-	tiletype* surfstone;
-	tiletype* midstone;
-	tiletype* deepstone;
-	tiletype* borderstone;
+	tile* air;
+	tile* borderstone;
+	std::vector<tile*> surfstone;
+	std::vector<tile*> midstone;
+	std::vector<tile*> deepstone;
 public:
-	map(short a, short b, short c);
+	map(ushort width, ushort height, ushort depth);
 	~map();
-	tile* GetTile(short a, short b, short c);
+	tile* GetTile(ushort x, ushort y, ushort z);
 	void DelTile(tile *target);
-	void DelTile(short a, short b, short c);
-	short GetWidth();	
-	short GetHeight();	
-	short GetDepth();	
+	void DelTile(ushort x, ushort y, ushort z);
+	tile* FindTileOnVertical(ushort x, ushort y);
+	ushort GetWidth();
+	ushort GetHeight();
+	ushort GetDepth();
 };
+
 class Perlin: public map{
-	tiletype* findtile(std::string name, std::vector<tiletype*> tiletypes);
+	tile* FindTile(std::string name, std::vector<tile*> tiletypes);
+	tile* PickRand(std::vector<tile*> tiletypes);
 public:
-	Perlin(short width, short height, short depth, std::vector<tiletype*> tiletypes);
+	Perlin(ushort width, ushort height, ushort depth, std::vector<tile*> tiletypes);
 };
+
 class camera{
-	creature* cr;
-	tile* place;
-	short width, height;
+	gameobjectmovable* targetmov;
+	gameobjectstatic* targetstat;
+	ushort width, height;
 public:
-	camera(creature* cr);
-	camera(tile* place);
+	camera(gameobjectmovable* target);
+	camera(gameobjectstatic* target);
 	~camera();
 	bool Flying();
-	void FollowCreature(creature* cr);
-	void GoToPlace(tile* place);
-	void SetParams(short width, short height);
-	short GetX();
-	short GetY();
-	short GetZ();
-	short GetOffsetX();
-	short GetOffsetY();
-	short* GetCoords();
+	void Follow(gameobjectmovable* newtarget);
+	void Follow(gameobjectstatic* newtarget);
+	void SetParams(ushort width, ushort height);
+	ushort GetX();
+	ushort GetY();
+	ushort GetZ();
+	ushort GetOffsetX();
+	ushort GetOffsetY();
+	ushort* GetCoords();
 };
 #endif
