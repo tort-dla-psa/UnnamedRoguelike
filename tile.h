@@ -1,50 +1,41 @@
 #ifndef tile_h
 #define tile_h
-#include<string>
-#include"material.h"
-#include"item.h"
+#include<vector>
+#include<memory>
+#include"gameobject.h"
+
 class creature;
 class item;
-class tiletype{
-	char img;
-	double dropchance;
-	material* mat;
-	item* ore;
+class tile:public gameobjectstatic{
+protected:
+        ushort hp;
+        double dropchance;
+        item* ore;
 public:
-	tiletype(char img, double dropchance, item* ore, material* mat);
-	~tiletype();
-	material* GetMat();
-	item* GetOre();
-	char GetImg();
-	double GetChance();
+        tile(ushort x, ushort y, ushort z);
+        tile(ushort x, ushort y, ushort z, tile* sample);
+	tile(char img, std::string name, double dropchance, item* ore);
+        ~tile();
+        
+	virtual bool IsSpace();
+	void SetOre(item* ore);
+        item* GetOre();
+        double GetChance();
+	char GetImg() override;
 };
-class tile{
-	tiletype* idea;
-	short x,y,z;
-	short hp;
-	creature* cr;
-	item* it;
+class tilewspace:public tile{
+        std::vector<gameobjectmovable*> objects;
 public:
-	tile(short x, short y, short z);
-	tile(short x, short y, short z, tiletype* idea);
-	~tile();
-	void GetDamage(short dmg);
-	std::string GetName();
-	char GetChar();
-	bool GetPass();
-	bool IsSpace();
-	material* GetMat();
-	item* GetOre();
-	short GetDensity();
-	short GetMelting();
-	short GetX();
-	short GetY();
-	short GetZ();
-	short GetHp();
-	creature* GetCreature();
-	item* GetItem();
-	void PlaceCreature(creature* target);
-	void PlaceItem(item* target);
-};
+        tilewspace(ushort x, ushort y, ushort z, tilewspace* sample);
+	tilewspace(char img, std::string name, item* ore);
+        ~tilewspace();
 
+	bool IsSpace() override;
+        void RemoveObject(gameobjectmovable* target);
+	void AddObject(gameobjectmovable* target);
+	ushort GetObjectsCount();
+	bool HasObjects();
+        std::vector<gameobjectmovable*> GetObjects();
+	char GetImg() override;
+};
 #endif
