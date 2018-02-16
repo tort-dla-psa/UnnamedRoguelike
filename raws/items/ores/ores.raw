@@ -1,0 +1,29 @@
+[
+name:air placeholder
+img: 
+material:air
+]
+
+[
+name:borderstone placeholder
+img:@
+material:borderstone
+]
+
+[
+name:dirt pile
+img:d
+material:dirt
+]
+
+[
+name:granite boulder
+img:g
+material:granite
+]
+
+[
+name:marble boulder
+img:m
+material:marble
+]
