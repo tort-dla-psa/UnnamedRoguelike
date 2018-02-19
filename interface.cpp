@@ -286,14 +286,12 @@ interface::~interface(){
 	delete playerstat,
 	       chat,
 	       mainscr;
-	for(short i=0; i<32; i++){
-		delete colors[i];
+	for(auto c:colors){
+		delete c;
 	}
-	delete[] colors;
-	for(short i=0; i<32; i++){
-		delete pairs[i];
+	for(auto p:pairs){
+		delete p;
 	}
-	delete[] pairs;
 	clear();
 	endwin();
 }
@@ -303,36 +301,32 @@ interface::interface(){
 	noecho();
 	curs_set(FALSE);
 	start_color();
-	colornum = 0;
-	pairnum = 1;
-	colors = new myColor*[32];
-	pairs = new myPair*[32];
-	colors[colornum] = new myColor(0,0,0,"black",colornum); 	colornum++;	//0
-	colors[colornum] = new myColor(1000,1000,1000,"white",colornum);colornum++;	//1
-	colors[colornum] = new myColor(500,500,500,"gray",colornum); 	colornum++;	//2
-	colors[colornum] = new myColor(1000,1000,200,"yelow",colornum);	colornum++;	//3
-	colors[colornum] = new myColor(1000,200,1000,"violet",colornum);colornum++;	//4
-	colors[colornum] = new myColor(200,1000,1000,"cyan",colornum); 	colornum++;	//5
-	colors[colornum] = new myColor(1000,200,200,"red",colornum);	colornum++;	//6
-	colors[colornum] = new myColor(200,1000,200,"green",colornum);	colornum++;	//7
-	colors[colornum] = new myColor(200,200,1000,"blue",colornum);	colornum++;	//8
-	colors[colornum] = new myColor(800,800,800,"white2",colornum);	colornum++;	//9
-	colors[colornum] = new myColor(600,600,600,"white3",colornum);	colornum++;	//10
-	colors[colornum] = new myColor(400,400,400,"white4",colornum);	colornum++;	//11
-	colors[colornum] = new myColor(200,200,200,"white5",colornum);	colornum++;	//12
-	pairs[pairnum] = new myPair(colors[1],colors[0],pairnum);	pairnum++;	//1
-	pairs[pairnum] = new myPair(colors[0],colors[1],pairnum);	pairnum++;	//2
-	pairs[pairnum] = new myPair(colors[2],colors[0],pairnum);	pairnum++;	//3
-	pairs[pairnum] = new myPair(colors[3],colors[0],pairnum);	pairnum++;	//4
-	pairs[pairnum] = new myPair(colors[4],colors[0],pairnum);	pairnum++;	//5
-	pairs[pairnum] = new myPair(colors[5],colors[0],pairnum);	pairnum++;	//6
-	pairs[pairnum] = new myPair(colors[6],colors[0],pairnum);	pairnum++;	//7
-	pairs[pairnum] = new myPair(colors[7],colors[0],pairnum);	pairnum++;	//8
-	pairs[pairnum] = new myPair(colors[8],colors[0],pairnum);	pairnum++;	//9
-	pairs[pairnum] = new myPair(colors[0],colors[9],pairnum);	pairnum++;	//10
-	pairs[pairnum] = new myPair(colors[0],colors[10],pairnum);	pairnum++;	//11
-	pairs[pairnum] = new myPair(colors[0],colors[11],pairnum);	pairnum++;	//12
-	pairs[pairnum] = new myPair(colors[0],colors[12],pairnum);	pairnum++;	//13
+	colors.push_back(new myColor(0,0,0,"black",colors.size()));	//0
+	colors.push_back(new myColor(1000,1000,1000,"white",colors.size()));	//1
+	colors.push_back(new myColor(500,500,500,"gray",colors.size()));	//2
+	colors.push_back(new myColor(1000,1000,200,"yelow",colors.size()));	//3
+	colors.push_back(new myColor(1000,200,1000,"violet",colors.size()));	//4
+	colors.push_back(new myColor(200,1000,1000,"cyan",colors.size())); 	//5
+	colors.push_back(new myColor(1000,200,200,"red",colors.size()));	//6
+	colors.push_back(new myColor(200,1000,200,"green",colors.size()));	//7
+	colors.push_back(new myColor(200,200,1000,"blue",colors.size()));	//8
+	colors.push_back(new myColor(800,800,800,"white2",colors.size()));	//9
+	colors.push_back(new myColor(600,600,600,"white3",colors.size()));	//10
+	colors.push_back(new myColor(400,400,400,"white4",colors.size()));	//11
+	colors.push_back(new myColor(200,200,200,"white5",colors.size()));	//12
+	pairs.push_back(new myPair(colors[1],colors[0],pairs.size()+1));	//1
+	pairs.push_back(new myPair(colors[0],colors[1],pairs.size()+1));	//2
+	pairs.push_back(new myPair(colors[2],colors[0],pairs.size()+1));	//3
+	pairs.push_back(new myPair(colors[3],colors[0],pairs.size()+1));	//4
+	pairs.push_back(new myPair(colors[4],colors[0],pairs.size()+1));	//5
+	pairs.push_back(new myPair(colors[5],colors[0],pairs.size()+1));	//6
+	pairs.push_back(new myPair(colors[6],colors[0],pairs.size()+1));	//7
+	pairs.push_back(new myPair(colors[7],colors[0],pairs.size()+1));	//8
+	pairs.push_back(new myPair(colors[8],colors[0],pairs.size()+1));	//9
+	pairs.push_back(new myPair(colors[0],colors[9],pairs.size()+1));	//10
+	pairs.push_back(new myPair(colors[0],colors[10],pairs.size()+1));	//11
+	pairs.push_back(new myPair(colors[0],colors[11],pairs.size()+1));	//12
+	pairs.push_back(new myPair(colors[0],colors[12],pairs.size()+1));	//13
 	short width,height;
 	getmaxyx(stdscr,height,width);
 	keypad(stdscr,true);
