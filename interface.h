@@ -1,6 +1,7 @@
 #ifndef interface_h
 #define interface_h
 #include <string>
+#include <vector>
 #include <ncurses.h>
 #include "tile.h"
 #include "item.h"
@@ -30,8 +31,6 @@ public:
         ~myPair();
 	myColor* GetFg();
 	myColor* GetBg();
-	void On();
-	void Off();
 };
 
 class window{
@@ -121,13 +120,44 @@ public:
 	short GetHighlight();
 };
 
+class listline{
+	std::string mes;
+	short num;
+public:
+	listline(std::string mes, short num);
+	~listline();
+	void ChangeNum(short num);
+	short GetNum();
+	std::string GetMes();
+};
+
+class list{
+	std::vector<listline> lines;
+	short focus;
+public:
+	list();
+	~list();
+	void Add(std::string mes);
+	void Remove(short pos);
+	std::string GetMes(short pos);
+	short GetFocus();
+	short GetSize();
+};
+
+class window_dialog:public window_bordered{
+	list messages;
+public:
+	window_dialog();
+	void AddOption(std::string opt);
+	void RemoveOption(short place);
+};
+
 class interface{
 	worldwindow* mainscr;
 	window_chat* chat;
 	window_playerstats* playerstat;
-	myColor** colors;
-	myPair** pairs;
-	short colornum,pairnum;
+	std::vector<myColor*> colors;
+	std::vector<myPair*> pairs;
 	void ProcessWindowOnResize(window_bordered* win,short deltax, short deltay);
 	void ResizeInterface(short newx, short newy);
 	void DrawWin(window* win);
