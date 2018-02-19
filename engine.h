@@ -12,7 +12,7 @@
 #include"tile.h"
 #include"map.h"
 #include"material.h"
-#include"interface.h"
+#include"./interface/interface.h"
 #include"pathfinding.h"
 
 class engine{
