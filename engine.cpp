@@ -1,3 +1,4 @@
+#include<algorithm>
 #include"engine.h"
 #include"FileOperations.cpp"
 
@@ -54,7 +55,6 @@ engine::~engine(){
 			delete materials[i];
 	materials.clear();
 }
-
 void engine::drawrecurse(ushort x, ushort y, ushort z, ushort iter, ushort max){
 	tile* temp = mp->GetTile(x+cam->GetOffsetX(),y+cam->GetOffsetY(),z);
 	if(iter>=max||!temp){
@@ -144,10 +144,6 @@ creature* engine::AddCreature(std::string name, char img, ushort hp, ushort dp, 
 	}
 	return NULL;
 }
-void engine::DelCreature(creature* cr){
-	std::vector<creature*>::iterator i = std::find(creatures.begin(), creatures.end(), cr);
-	delete creatures[i-creatures.begin()];
-}
 void engine::MovePlayer(char ch){
 	short* dirs = GetDir(ch);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
@@ -176,31 +172,32 @@ void engine::PerformAttack(char ch){
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
 	if(temptile->IsSpace()){
-		/*creature* temp = (temptile->GetCreatures())[0];
-		if(temp!=NULL){
-			if(temp!=player){
-				short dp = player->Attack(temp);
-				WriteLog(temp,dp);
-				if(temp->GetHp()<1)
-					DelCreature(temp);
-			}
-		}else{*/
-			tile* temptile = mp->GetTile(x,y,z+1);
-			if(!temptile->IsSpace() && temptile->GetHp()>-1){
+		std::vector<gameobjectmovable*> objects =((tilewspace*)temptile)->GetObjects();
+		ushort objectssize = objects.size();
+		if(objectssize==0){
+			temptile = mp->GetTile(x,y,z+1);
+			if(!temptile->IsSpace() && temptile->GetName()!="borderstone"){
 				short dp = player->Attack(temptile);
 				WriteLog(temptile, dp);
 				if(temptile->GetHp()<1)
 					mp->DelTile(temptile);
 			}
-		//}
-	}else if(!temptile->IsSpace() && temptile->GetHp()!=-10){
+		}else if(objectssize==1){
+			//Add dialog window
+			gameobjectmovable* temp = objects[0];
+			if(temp!=player){
+				short dp = player->Attack(temp);
+				WriteLog(temp,dp);
+				if(temp->GetHp()<1)
+					DelObject(temp);
+			}
+		}else{
+			//Add dialog window with list
+		}
+	}else if(!temptile->IsSpace() && temptile->GetName()!="borderstone"){
 		short dp = player->Attack(temptile);
 		WriteLog(temptile, dp);
 		if(temptile->GetHp()<1){
-			item* oreidea = temptile->GetOre();
-			short x = temptile->GetX();
-			short y = temptile->GetY();
-			short z = temptile->GetZ();
 			mp->DelTile(temptile);
 		}
 	}
@@ -237,9 +234,23 @@ void engine::PickUp(char ch){
 	delete[] dirs;
 }
 
-void engine::DelItem(item* it){
-	std::vector<item*>::iterator i = std::find(items.begin(), items.end(), it);
-	delete items[i-items.begin()];
+void engine::DelObject(gameobjectmovable* it){
+	for(auto i:items){
+		if(it==i){
+			it->GetPlace()->RemoveObject(it);
+			items.erase(std::find(items.begin(),items.end(),i),items.end());
+			delete it;
+			return;
+		}
+	}
+	for(auto c:creatures){
+		if(it==c){
+			it->GetPlace()->RemoveObject(it);
+			creatures.erase(std::find(creatures.begin(),creatures.end(),c),creatures.end());
+			delete it;
+			return;
+		}
+	}
 }
 
 void engine::HandleKey(char ch){
@@ -313,7 +324,6 @@ void engine::MainLoop(){
 		win->CheckResize();
 		cam->SetParams(win->GetWidth(),win->GetHeight());
 		DrawMap();
-		win->ShowPlayerStat();
 		win->Draw();
 		char ch = getch();
 		HandleKey(ch);
@@ -349,11 +359,7 @@ short* engine::GetDir(char ch){
 void engine::WriteLog(std::string mes){
 	win->WriteToChat(mes);
 }
-void engine::WriteLog(tile* place, ushort dp){
-	std::string mes = "You hit "+place->GetName()+", "+std::to_string(dp)+" dp";
-	win->WriteToChat(mes);
-}
-void engine::WriteLog(creature* target, ushort dp){
+void engine::WriteLog(gameobject* target, ushort dp){
 	std::string mes = "You hit "+target->GetName()+"("+target->GetImg()+") , "+std::to_string(dp)+" dp";
 	win->WriteToChat(mes);
 }
