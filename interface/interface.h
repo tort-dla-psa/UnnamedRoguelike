@@ -28,7 +28,7 @@ public:
 	void ClearMap();
 	void DrawOnMap(short x,short y,char ch);
 	void DrawOnMap(short x,short y,char ch, short color);
-	void ShowPlayerStat();
+	void ShowDialog(std::string mes, std::vector<std::string> variants);
 	void WriteToChat(std::string text);
 	void ClearChat();
 	void ChatScrollUp();

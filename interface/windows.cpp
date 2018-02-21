@@ -57,7 +57,6 @@ window_bordered::window_bordered(short x, short y, short width, short height):
         win = newwin(height, width, y, x);
         subwin = derwin(win,height-2, width -2, 1, 1);
         focused=updated=false;
-        luanch=ldanch=ruanch=rdanch=false;
 }
 window_bordered::~window_bordered(){}
 
@@ -88,15 +87,6 @@ void window_bordered::MoveTo(short x, short y){
         mvwin(win,this->y,this->x);
         SetUpdated(true);
 }
-
-void window_bordered::SetLUAnch(bool key){      luanch=key;}
-void window_bordered::SetLDAnch(bool key){      ldanch=key;}
-void window_bordered::SetRUAnch(bool key){      ruanch=key;}
-void window_bordered::SetRDAnch(bool key){      rdanch=key;}
-bool window_bordered::GetLUAnch(){              return luanch;}
-bool window_bordered::GetLDAnch(){              return ldanch;}
-bool window_bordered::GetRUAnch(){              return ruanch;}
-bool window_bordered::GetRDAnch(){              return rdanch;}
 
 
 window_chat::window_chat(short x, short y, short width, short height,short chatsize):window_bordered(x, y, width, height)

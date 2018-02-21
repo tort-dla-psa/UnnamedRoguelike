@@ -44,27 +44,15 @@ protected:
         myPair* pair;
         myPair* focusedpair;
         short x, y;
-        bool luanch,
-             ldanch,
-             ruanch,
-             rdanch;
 public:
         window_bordered(short x, short y, short width, short height);
         ~window_bordered();
         void Draw()override;
         void Clear()override;
-        void SetLUAnch(bool key);
-        void SetLDAnch(bool key);
-        void SetRUAnch(bool key);
-        void SetRDAnch(bool key);
         short GetX();
         short GetY();
         void MoveAt(short dx, short dy);
         void MoveTo(short x, short y);
-        bool GetLUAnch();
-        bool GetLDAnch();
-        bool GetRUAnch();
-        bool GetRDAnch();
 };
 
 class window_chat:public window_bordered{

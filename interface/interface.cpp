@@ -6,6 +6,7 @@
 #include"lists.h"
 #include"windows.h"
 
+//test
 interface::~interface(){
 	delete playerstat,
 	       chat,
@@ -54,27 +55,15 @@ interface::interface(){
 	short width,height;
 	getmaxyx(stdscr,height,width);
 	keypad(stdscr,true);
-	short rightoffset = 10;
-	short leftoffset = 20;
-	short rightstart = width-rightoffset;
 	mainscr = new worldwindow(width,height+1);
-	playerstat = new window_playerstats(rightstart, 0, rightoffset, 6);
-	chat = new window_chat(0,height-12,leftoffset-1,12,50);
-	playerstat->SetRUAnch(true);
-	chat->SetLDAnch(true);
+	playerstat = new window_playerstats(width/6-1, height-10, width/6, 10);
+	chat = new window_chat(0,height-10,width/6,10,50);
 }
 
 void interface::AssignPlayer(creature* player){
 	playerstat->AssignPlayer(player);
 }
 
-void interface::Draw(){
-	mainscr->Draw();
-	playerstat->Draw();
-	chat->Draw();
-	doupdate();
-	move(GetHeight()-1,GetWidth()-1);
-}
 void interface::CheckResize(){
 	short tempwidth, tempheight;
 	getmaxyx(stdscr,tempheight,tempwidth);
@@ -82,28 +71,30 @@ void interface::CheckResize(){
 		ResizeInterface(tempwidth, tempheight);
 	}
 }
-void interface::ResizeInterface(short newx, short newy){
-	short deltay = newy - mainscr->GetHeight();
-	short deltax = newx - mainscr->GetWidth();
-
-	mainscr->Resize(newx,newy);
-	ProcessWindowOnResize(playerstat,deltax,deltay);
-	ProcessWindowOnResize(chat,deltax, deltay);
-	
-	Draw();
+void interface::Draw(){
+	mainscr->Draw();
+	chat->Draw();
+	playerstat->Draw();
+	playerstat->PrintStats();
+	doupdate();
+	move(GetHeight()-1,GetWidth()-1);
 }
-void interface::ProcessWindowOnResize(window_bordered* win, short deltax, short deltay){
-	if(win!=NULL){
-		if(win->GetLDAnch() || win->GetRDAnch())
-			win->MoveAt(0,deltay);
-		if(win->GetRUAnch() || win->GetRDAnch())
-			win->MoveAt(deltax,0);
+void interface::ClearMap(){
+	mainscr->Clear();
+}
+void interface::DrawOnMap(short x, short y,char ch){
+	mainscr->Draw(x,y,ch);
+}
+void interface::DrawOnMap(short x, short y,char ch, short color){
+	if(color==1){
+		mainscr->Draw(x,y,ch, 2);
+	}else{
+		mainscr->Draw(x,y,ch, 8+color);
 	}
 }
-void interface::ShowPlayerStat(){
-	playerstat->PrintStats();
+void interface::ShowDialog(std::string mes, std::vector<std::string> variants){
+	
 }
-
 void interface::WriteToChat(std::string text){
 	chat->AddMessage(text);
 }
@@ -119,20 +110,6 @@ void interface::ChatScrollDown(){
 void interface::SetChatFocus(bool key){	chat->SetFocused(key);}
 bool interface::GetChatFocus(){		chat->IsFocused();}
 
-void interface::DrawOnMap(short x, short y,char ch){
-	mainscr->Draw(x,y,ch);
-}
-void interface::DrawOnMap(short x, short y,char ch, short color){
-	if(color==1){
-		mainscr->Draw(x,y,ch, 2);
-	}else{
-		mainscr->Draw(x,y,ch, 8+color);
-	}
-}
-void interface::ClearMap(){
-	mainscr->Clear();
-}
-
 void interface::SetInventoryFocus(bool key){	
 	playerstat->SetFocused(key);
 }
@@ -142,7 +119,25 @@ void interface::InventoryFocusLeft(){
 void interface::InventoryFocusRight(){
 	playerstat->FocusRight();
 }
+bool interface::GetInventoryFocus(){		return playerstat->IsFocused();}
 short interface::GetWidth(){			return mainscr->GetWidth();}
 short interface::GetHeight(){			return mainscr->GetHeight();}
 short interface::GetHighlight(){		return playerstat->GetHighlight();}
-bool interface::GetInventoryFocus(){		return playerstat->IsFocused();}
+
+void interface::ResizeInterface(short newx, short newy){
+	short deltay = newy - mainscr->GetHeight();
+	short deltax = newx - mainscr->GetWidth();
+
+	mainscr->Resize(newx,newy);
+	ProcessWindowOnResize(playerstat,deltax,deltay);
+	ProcessWindowOnResize(chat,deltax, deltay);
+	
+	Draw();
+}
+void interface::ProcessWindowOnResize(window_bordered* win, short deltax, short deltay){
+	if(win!=NULL){
+			win->MoveAt(0,deltay);
+			win->MoveAt(deltax,0);
+	}
+}
+
