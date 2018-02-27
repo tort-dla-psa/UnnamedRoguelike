@@ -1,7 +1,6 @@
 #include<algorithm>
 #include"engine.h"
 #include"FileOperations.cpp"
-
 void ShowTiletypes(std::vector<tile*> tiletypes){
 	for(auto it:tiletypes){
 		printw("Char:%c \n",it->GetImg()); refresh();
@@ -19,7 +18,7 @@ engine::engine(){
 		exit(1);
 	}
 	srand(time(NULL));
-
+	InitKeys();
 	materials = FileOperations::LoadMaterials();
 	oreideas = FileOperations::LoadOres(materials);
 	tileideas = FileOperations::LoadTiles(oreideas);
@@ -31,6 +30,7 @@ engine::engine(){
 	AddCreature("Eve",'i',10,1,1,1,0);
 	CreateItem('0',materials[0],1,0,0);
 	CreateItem('1',materials[1],2,0,0);
+	CreateItem('2',materials[2],2,0,0);
 	DoGravity();
 	tile* destignation = mp->FindTileOnVertical(25,12);
 
@@ -41,7 +41,6 @@ engine::engine(){
 
 engine::~engine(){
 	delete mp;
-	delete cam;
 	delete win;
 	for(short i=0; i<creatures.size(); i++)
 			delete creatures[i];
@@ -55,8 +54,8 @@ engine::~engine(){
 			delete materials[i];
 	materials.clear();
 }
-void engine::drawrecurse(ushort x, ushort y, ushort z, ushort iter, ushort max){
-	tile* temp = mp->GetTile(x+cam->GetOffsetX(),y+cam->GetOffsetY(),z);
+void engine::DrawRecurse(ushort x, ushort y, ushort z, ushort iter, ushort max){
+	tile* temp = mp->GetTile(x+win->GetCamOffsetX(),y+win->GetCamOffsetY(),z);
 	if(iter>=max||!temp){
 		win->DrawOnMap(x,y,'.',1+iter);
 		return;
@@ -67,18 +66,18 @@ void engine::drawrecurse(ushort x, ushort y, ushort z, ushort iter, ushort max){
 			win->DrawOnMap(x,y,temp->GetImg(),1+iter);
 			return;
 		}
-		drawrecurse(x,y,z+1,iter+1,max);
+		DrawRecurse(x,y,z+1,iter+1,max);
 	}else{
 		win->DrawOnMap(x,y,temp->GetImg(),1+iter);
 	}
 }
 void engine::DrawMap(){
-	short camZ = cam->GetZ();
+	short camZ = win->GetCamZ();
 	short size = player->GetSightSize();
 	short mapX = mp->GetWidth();
 	short mapY = mp->GetHeight();
-	short X = cam->GetOffsetX();
-	short Y = cam->GetOffsetY();
+	short X = win->GetCamOffsetX();
+	short Y = win->GetCamOffsetY();
 	short winx = win->GetWidth();
 	short winy = win->GetHeight();
 	for(short i=0; i<winx; i++){
@@ -87,7 +86,7 @@ void engine::DrawMap(){
 				win->DrawOnMap(i,j,' ', 1);
 				continue;
 			}
-			drawrecurse(i,j,camZ,0,4);
+			DrawRecurse(i,j,camZ,0,4);
 		}
 		addch('\n');
 	}
@@ -138,14 +137,13 @@ creature* engine::AddCreature(std::string name, char img, ushort hp, ushort dp, 
 		if(creatures.size()==1){
 			player = temp;
 			win->AssignPlayer(player);
-			cam = new camera(player);
 		}
 		return temp;
 	}
 	return NULL;
 }
-void engine::MovePlayer(char ch){
-	short* dirs = GetDir(ch);
+void engine::MovePlayer(const int keycode){
+	short* dirs = GetDir(keycode);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
 	if(!temptile)	
@@ -160,15 +158,15 @@ void engine::MovePlayer(char ch){
 	}
 	delete[] dirs;
 }
-void engine::MoveCam(char ch){
-	short* dirs = GetDir(ch);
+void engine::MoveCam(const int keycode){
+	short* dirs = GetDir(keycode);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
-	cam->Follow(temptile);
+	win->CamFollow(temptile);
 	delete[] dirs;
 }
-void engine::PerformAttack(char ch){
-	short* dirs = GetDir(ch);
+void engine::PerformAttack(const int keycode){
+	short* dirs = GetDir(keycode);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
 	if(temptile->IsSpace()){
@@ -183,8 +181,11 @@ void engine::PerformAttack(char ch){
 					mp->DelTile(temptile);
 			}
 		}else if(objectssize==1){
-			//Add dialog window
 			gameobjectmovable* temp = objects[0];
+			if(!player->IsAttacked(temp)){
+				win->ShowAttackDialog(objects);
+				return;
+			}
 			if(temp!=player){
 				short dp = player->Attack(temp);
 				WriteLog(temp,dp);
@@ -192,7 +193,7 @@ void engine::PerformAttack(char ch){
 					DelObject(temp);
 			}
 		}else{
-			//Add dialog window with list
+			win->ShowAttackDialog(objects);
 		}
 	}else if(!temptile->IsSpace() && temptile->GetName()!="borderstone"){
 		short dp = player->Attack(temptile);
@@ -219,8 +220,8 @@ item* engine::CreateItem(char img, material* materia,  ushort x, ushort y, ushor
 	return NULL;
 }
 
-void engine::PickUp(char ch){
-	short* dirs = GetDir(ch);
+void engine::PickUp(const int keycode){
+	short* dirs = GetDir(keycode);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
 	if(temptile->IsSpace()){
@@ -253,76 +254,54 @@ void engine::DelObject(gameobjectmovable* it){
 	}
 }
 
+void engine::InitKeys(){
+	win->AddKey('A',win->iKEY_ATTACK_LEFT);
+	win->AddKey('D',win->iKEY_ATTACK_RIGHT);
+	win->AddKey('S',win->iKEY_ATTACK_DOWN);
+	win->AddKey('W',win->iKEY_ATTACK_UP);
+	win->AddKey('a',win->iKEY_LEFT);
+	win->AddKey('d',win->iKEY_RIGHT);
+	win->AddKey('s',win->iKEY_DOWN);
+	win->AddKey('w',win->iKEY_UP);
+	win->AddKey(10,win->iKEY_ENTER); 
+	win->AddKey(27,win->iKEY_ESC);
+	win->AddKey('c',win->iKEY_OPEN_CHAT);
+	win->AddKey('l',win->iKEY_CAMERA_FLY);
+	win->AddKey('g',win->iKEY_PICK_UP);
+	win->AddKey('h',win->iKEY_DROP);
+	win->AddKey('i',win->iKEY_OPEN_INVENTORY);
+}
 void engine::HandleKey(char ch){
-	if(ch=='0'){
-		win->SetInventoryFocus(false);
-		cam->Follow(player);
-		return;
-	}
-	if(win->GetInventoryFocus()){
-		if(ch=='I'||ch==27){
-			win->SetInventoryFocus(false);
-		}else if(ch=='g'){
-			short choose = win->GetHighlight();
-			player->Drop(choose);
-			short items = player->GetItemsCount();
-			short oldhlght = win->GetHighlight();
-			win->InventoryFocusRight();
-			if(oldhlght==win->GetHighlight())
-				win->InventoryFocusLeft();
-		}else if(ch=='h'){
-			player->Take(win->GetHighlight());
-		}else if(ch=='a'){
-			win->InventoryFocusLeft();
-		}else if(ch=='d'){
-			win->InventoryFocusRight();
-		}
-		return;
-	}
-	if(win->GetChatFocus()){
-		if(ch=='2'){
-			win->ChatScrollUp();
-		}else if(ch=='1'){
-			win->ChatScrollDown();
-		}else if(ch=='C'||ch==27){
-			win->SetChatFocus(false);
-		}
-		return;
-	}
-	if(!cam->Flying()){
-		if(ch=='w'||ch=='a'||ch=='s'||ch=='d'){
-			MovePlayer(ch);
-		}else if(ch=='W'||ch=='A'||ch=='S'||ch=='D'||ch=='>'||ch=='<'){
-			PerformAttack(ch);
-		}else if(ch=='g'){
-			PickUp(ch);
-		}else if(ch=='I'){
-			win->SetInventoryFocus(true);
-			cam->Follow(player);
-		}else if(ch=='C'){
-			win->SetChatFocus(true);
-		}else if(ch=='l'){
-			cam->Follow(player->GetPlace());
-		}
-	}else{
-		if(ch=='w'||ch=='a'||ch=='s'||ch=='d'||ch=='>'||ch=='<'){
-			MoveCam(ch);
-		}else if(ch==27||ch=='l'){
-			cam->Follow(player);
-		}else if(ch=='i'){
-			win->SetInventoryFocus(true);
-			cam->Follow(player);			
-		}else if(ch=='C'){
-			win->SetChatFocus(true);
-		}
-		return;
+	const int keycode = win->HandleKey(ch);
+	if(keycode==win->iKEYCODE_PLAYER_MOVE_UP||
+			keycode==win->iKEYCODE_PLAYER_MOVE_DOWN||
+			keycode==win->iKEYCODE_PLAYER_MOVE_LEFT||
+			keycode==win->iKEYCODE_PLAYER_MOVE_RIGHT)
+	{
+		MovePlayer(keycode);
+	}else if(keycode==win->iKEYCODE_PLAYER_ATTACK_UP||
+			keycode==win->iKEYCODE_PLAYER_ATTACK_DOWN||
+			keycode==win->iKEYCODE_PLAYER_ATTACK_LEFT||
+			keycode==win->iKEYCODE_PLAYER_ATTACK_RIGHT)
+	{
+		PerformAttack(keycode);
+	}else if(keycode==win->iKEYCODE_PLAYER_PICK_UP){
+		PickUp(keycode);
+	}else if(keycode==win->iKEYCODE_CAM_MOVE_UP||
+			keycode==win->iKEYCODE_CAM_MOVE_DOWN||
+			keycode==win->iKEYCODE_CAM_MOVE_LEFT||
+			keycode==win->iKEYCODE_CAM_MOVE_RIGHT||
+			keycode==win->iKEYCODE_CAM_MOVE_DOWNZ||
+			keycode==win->iKEYCODE_CAM_MOVE_UPZ)
+	{
+		MoveCam(keycode);
 	}
 }
 
 void engine::MainLoop(){
 	while(player!=NULL){
 		win->CheckResize();
-		cam->SetParams(win->GetWidth(),win->GetHeight());
+		win->SetCamParameters(win->GetWidth(),win->GetHeight());
 		DrawMap();
 		win->Draw();
 		char ch = getch();
@@ -334,25 +313,38 @@ void engine::MainLoop(){
 	}
 }
 
-short* engine::GetDir(char ch){
-	short x = cam->GetX();
-	short y = cam->GetY();
-	short z = cam->GetZ();	
-	if(ch=='w'||ch=='W'){
-		y=(y-1<0)?0:y-1;
-	}else if(ch=='s'||ch=='S'){
-		short h = mp->GetHeight();
-		y=(y+1==h)?h-1:y+1;
-	}else if(ch=='a'||ch=='A'){
-		x=(x-1<0)?0:x-1;
-	}else if(ch=='d'||ch=='D'){
-		short w = mp->GetWidth();
-		x=(x+1==w)?w-1:x+1;
-	}else if(ch=='>'){
-		short d = mp->GetDepth();
-		z=(z+1==d)?d-1:z+1;
-	}else if(ch=='<'){
-		z=(z-1<0)?0:z-1;
+short* engine::GetDir(const int keycode){
+	short x = win->GetCamX();
+	short y = win->GetCamY();
+	short z = win->GetCamZ();
+	if(keycode==win->iKEYCODE_PLAYER_MOVE_UP||
+		keycode==win->iKEYCODE_PLAYER_ATTACK_UP||
+		keycode==win->iKEYCODE_CAM_MOVE_UP)
+	{
+		y-=1;
+	}else if(keycode==win->iKEYCODE_PLAYER_MOVE_DOWN||
+		keycode==win->iKEYCODE_PLAYER_ATTACK_DOWN||
+		keycode==win->iKEYCODE_CAM_MOVE_DOWN)
+	{
+		y+=1;
+	}else if(keycode==win->iKEYCODE_PLAYER_MOVE_LEFT||
+		keycode==win->iKEYCODE_PLAYER_ATTACK_LEFT||
+		keycode==win->iKEYCODE_CAM_MOVE_LEFT)
+	{
+		x-=1;
+	}else if(keycode==win->iKEYCODE_PLAYER_MOVE_RIGHT||
+		keycode==win->iKEYCODE_PLAYER_ATTACK_RIGHT||
+		keycode==win->iKEYCODE_CAM_MOVE_RIGHT)
+	{
+		x+=1;
+	}else if(keycode==win->iKEYCODE_PLAYER_ATTACK_DOWNZ||
+		keycode==win->iKEYCODE_CAM_MOVE_DOWNZ)
+	{
+		z+=1;
+	}else if(keycode==win->iKEYCODE_PLAYER_ATTACK_UPZ||
+		keycode==win->iKEYCODE_CAM_MOVE_UPZ)
+	{
+		z-=1;
 	}
 	return new short[3]{x,y,z};
 }
