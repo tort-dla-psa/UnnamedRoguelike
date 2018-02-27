@@ -41,6 +41,7 @@ public:
 	std::string GetName();
         virtual char GetImg();
 	material* GetMat();
+	virtual bool IsMovable();
 };
 
 class gameobjectmovable:public gameobject{
@@ -60,6 +61,7 @@ public:
 	void Move(tilewspace* newplace);
         creature* GetHolder();
         tilewspace* GetPlace();
+	bool IsMovable() override;
 };
 
 class gameobjectstatic:public gameobject{
