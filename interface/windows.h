@@ -2,11 +2,12 @@
 #define windows_h
 #include<string>
 #include<ncurses.h>
-#include"lists.h"
+#include<menu.h>
 
 class myColor;
 class myPair;
 class creature;
+class gameobjectmovable;
 
 class window{
 protected:
@@ -14,15 +15,15 @@ protected:
         bool updated;
         bool focused;
         WINDOW* win;
-        myColor* fg;
+	myColor* fg;
 public:
-        window(short width, short height);
-        ~window();
+	window(short width, short height);
+	~window();
         virtual void Clear();
-        virtual void Draw();
+	virtual void Draw();
         void Resize(short newx, short newy);
         void SetUpdated(bool key);
-        void SetFocused(bool key);
+	void SetFocused(bool key);
         bool IsUpdated();
         bool IsFocused();
         short GetWidth();
@@ -42,7 +43,6 @@ class window_bordered:public window{
 protected:
         WINDOW* subwin;
         myPair* pair;
-        myPair* focusedpair;
         short x, y;
 public:
         window_bordered(short x, short y, short width, short height);
@@ -83,15 +83,22 @@ public:
         short GetHighlight();
 };
 
-class window_dialog:public window_bordered{
-        list variants;
+class attack_dialog:public window_bordered{
         std::string message;
+	std::vector<gameobjectmovable*>* targetspointer;
+	ITEM** items;
+	ushort itemscount;
+	ITEM* focused_item;
+	char* chars;
+        std::string* strings;
+	MENU* mymenu;
 public:
-        window_dialog(short x, short y, short width, short height, std::string message);
-        ~window_dialog();
-        void AddOption(std::string opt);
-        void RemoveOption(short place);
+        attack_dialog(short x, short y, short width, short height, std::vector<gameobjectmovable*> targets);
+        ~attack_dialog();
         void Draw() override;
+	void FocusUp();
+	void FocusDown();
+	gameobjectmovable* GetFocused();
 };
 
 #endif

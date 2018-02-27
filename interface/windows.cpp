@@ -39,7 +39,8 @@ short window::GetHeight(){              return height;}
 
 
 worldwindow::worldwindow(short width, short height):
-        window(width,height){}
+        window(width,height)
+{}
 
 worldwindow::~worldwindow(){}
 
@@ -56,7 +57,6 @@ window_bordered::window_bordered(short x, short y, short width, short height):
 {
         win = newwin(height, width, y, x);
         subwin = derwin(win,height-2, width -2, 1, 1);
-        focused=updated=false;
 }
 window_bordered::~window_bordered(){}
 
@@ -251,20 +251,54 @@ void window_playerstats::FocusRight(){
 short window_playerstats::GetHighlight(){       return itemhlght;}
 
 
-window_dialog::window_dialog(short x, short y, short width, short height, std::string message):
-        window_bordered(x,y,width,height), message(message){}
-
-window_dialog::~window_dialog(){};
-
-void window_dialog::AddOption(std::string opt){
-        variants.Add(opt);
+attack_dialog::attack_dialog(short x, short y, short width, short height, std::vector<gameobjectmovable*> targets):
+        window_bordered(x,y,width,height), message("Choose target:")
+{
+	itemscount = targets.size();
+	items = new ITEM*[itemscount];
+	chars = new char[itemscount];
+	strings = new std::string[itemscount];
+	for(ushort i=0; i<itemscount; i++){
+		chars[i] = targets[i]->GetImg();
+		strings[i] = targets[i]->GetName();
+		items[i] = new_item(&chars[i], strings[i].c_str());
+		set_item_userptr(items[i], targets[i]);
+	}
+	items[itemscount] = NULL;
+	mymenu = new_menu(items);
+	set_menu_win(mymenu, win);
+	set_menu_sub(mymenu, subwin);
+	set_menu_mark(mymenu, "->");
+	set_menu_format(mymenu, 5,1);
+	updated = true;
 }
 
-void window_dialog::RemoveOption(short place){
-        variants.Remove(place);
+attack_dialog::~attack_dialog(){
+	unpost_menu(mymenu);
+	free_menu(mymenu);
+	for(ushort i=0; i<itemscount; i++){
+		free_item(items[i]);
+	}
+	endwin();
 }
 
-void window_dialog::Draw(){
-
+void attack_dialog::Draw(){
+	if(updated){
+                box(win,0,0);
+                wnoutrefresh(win);
+		//wprintw(subwin, "%s", message.c_str());
+		post_menu(mymenu);
+                wnoutrefresh(subwin);
+                SetUpdated(false);
+        }
 }
 
+void attack_dialog::FocusUp(){
+	menu_driver(mymenu, REQ_UP_ITEM);
+	updated = true;
+}
+void attack_dialog::FocusDown(){
+	menu_driver(mymenu, REQ_DOWN_ITEM);
+	updated = true;
+}
+gameobjectmovable* attack_dialog::GetFocused(){	item_userptr(current_item(mymenu));}
