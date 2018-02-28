@@ -24,6 +24,11 @@ interface::~interface(){
 		delete p;
 	}
 	pairs.clear();
+	for(auto k:keys){
+		delete k;
+	}
+	keys.clear();
+	delete cam;
 	clear();
 	endwin();
 }
@@ -254,15 +259,13 @@ void interface::SetFocus(window* win){
 		}
 	}
 }
+
 bool interface::GetChatFocus(){		chat->IsFocused();}
 
-void interface::InventoryFocusLeft(){
-	playerstat->FocusLeft();
-}
-void interface::InventoryFocusRight(){
-	playerstat->FocusRight();
-}
+void interface::InventoryFocusLeft(){	playerstat->FocusLeft();}
+void interface::InventoryFocusRight(){	playerstat->FocusRight();}
 bool interface::GetInventoryFocus(){		return playerstat->IsFocused();}
+
 short interface::GetWidth(){			return mainscr->GetWidth();}
 short interface::GetHeight(){			return mainscr->GetHeight();}
 short interface::GetHighlight(){		return playerstat->GetHighlight();}
@@ -279,8 +282,7 @@ void interface::ResizeInterface(short newx, short newy){
 }
 void interface::ProcessWindowOnResize(window_bordered* win, short deltax, short deltay){
 	if(win!=NULL){
-		win->MoveAt(0,deltay);
-		win->MoveAt(deltax,0);
+		win->MoveAt(deltax,deltay);
 	}
 }
 

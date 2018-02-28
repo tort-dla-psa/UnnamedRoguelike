@@ -48,7 +48,10 @@ gameobjectmovable::gameobjectmovable(tilewspace* place):
 	place = nullptr;
 }
 
-gameobjectmovable::~gameobjectmovable(){}
+gameobjectmovable::~gameobjectmovable(){
+	if(place)
+		place->RemoveObject(this);
+}
 
 creature* gameobjectmovable::GetHolder(){	return holder;}
 tilewspace* gameobjectmovable::GetPlace(){	return place;}

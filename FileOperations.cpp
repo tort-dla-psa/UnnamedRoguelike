@@ -5,6 +5,14 @@
 #include<vector>
 #include<ncurses.h>
 namespace FileOperations{
+	static tileenums::DepthType stoenum(std::string str){
+		if(str=="cover")	return tileenums::cover;
+		if(str=="surface")	return tileenums::surface;
+		if(str=="middle")	return tileenums::middle;
+		if(str=="deep")		return tileenums::deep;
+		return tileenums::none;
+	}
+
 	static std::vector<item*> LoadOres(std::vector<material*> materials){
 		std::vector<item*> ores;
 		std::ifstream oresfile("raws/items/ores/ores.raw");
@@ -51,6 +59,7 @@ namespace FileOperations{
 		std::string val="none";
 		std::string orename="none";
 		std::string name = "none";
+		tileenums::DepthType depth= tileenums::DepthType::none;
 		char img='@';
 		item* ore = NULL;
 		short dropchance=0;
@@ -60,9 +69,9 @@ namespace FileOperations{
 			}
 			if(line=="]"){
 				if(ore->GetMat()->GetPass()){
-					tiles.push_back(new tilewspace(img,name,ore));
+					tiles.push_back(new tilewspace(img,name,ore,depth));
 				}else{
-					tiles.push_back(new tile(img,name,dropchance,ore));
+					tiles.push_back(new tile(img,name,dropchance,ore,depth));
 				}
 				img='@';
 				name = "none";
@@ -78,6 +87,8 @@ namespace FileOperations{
 				img=val[0];
 			}else if(temptype=="name"){
 				name=val;
+			}else if(temptype=="depthtype"){
+				depth=stoenum(val);
 			}else if(temptype=="dropchance"){
 				dropchance=std::stoi(val);
 			}else if(temptype=="dropproduct"){
@@ -98,7 +109,6 @@ namespace FileOperations{
 		std::string type="";
 		std::string temptype="";
 		std::string val="";
-		short value=-1;
 		short melting=-1;
 		short density=-1;
 		for(std::string line; getline(stones,line);){
@@ -107,13 +117,12 @@ namespace FileOperations{
 			}
 			if(line=="]"){
 				if(type=="gas"){
-					materials.push_back(new gasMAT(density,value,name));
+					materials.push_back(new gasMAT(density,name));
 				}else{
-					materials.push_back(new stoneMAT(density,value,melting,name));
+					materials.push_back(new stoneMAT(density,melting,name));
 				}
 				name="generic";
 				type="";
-				value=-1;
 				melting=-1;
 				density=-1;
 				continue;
@@ -125,8 +134,6 @@ namespace FileOperations{
 				name=val;
 			}else if(temptype=="type"){
 				type=val;
-			}else if(temptype=="value"){
-				value=std::stoi(val);
 			}else if(temptype=="melting"){
 				melting=std::stoi(val);
 			}else if(temptype=="density"){

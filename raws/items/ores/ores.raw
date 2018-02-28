@@ -17,13 +17,37 @@ material:dirt
 ]
 
 [
+name:sandstone pebbles
+img:.
+material:sandstone
+]
+
+[
+name:flint pebbles
+img:,
+material:flint
+]
+
+[
 name:granite boulder
 img:g
 material:granite
 ]
 
 [
+name:diorite boulder
+img:r
+material:diorite
+]
+
+[
 name:marble boulder
 img:m
 material:marble
+]
+
+[
+name:quartzite boulder
+img:q
+material:quartz
 ]

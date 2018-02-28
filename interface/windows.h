@@ -18,7 +18,7 @@ protected:
 	myColor* fg;
 public:
 	window(short width, short height);
-	~window();
+	virtual ~window();
         virtual void Clear();
 	virtual void Draw();
         void Resize(short newx, short newy);
@@ -46,7 +46,7 @@ protected:
         short x, y;
 public:
         window_bordered(short x, short y, short width, short height);
-        ~window_bordered();
+        virtual ~window_bordered();
         void Draw()override;
         void Clear()override;
         short GetX();
@@ -89,7 +89,7 @@ class attack_dialog:public window_bordered{
 	ITEM** items;
 	ushort itemscount;
 	ITEM* focused_item;
-	char* chars;
+	std::string* chars;
         std::string* strings;
 	MENU* mymenu;
 public:

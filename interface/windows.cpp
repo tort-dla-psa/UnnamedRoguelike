@@ -9,7 +9,9 @@ window::window(short width, short height):
         updated=false;
         focused=false;
 }
-window::~window(){}
+window::~window(){
+	delwin(win);
+}
 
 void window::Clear(){
         wclear(win);
@@ -58,7 +60,12 @@ window_bordered::window_bordered(short x, short y, short width, short height):
         win = newwin(height, width, y, x);
         subwin = derwin(win,height-2, width -2, 1, 1);
 }
-window_bordered::~window_bordered(){}
+window_bordered::~window_bordered()
+{
+	wborder(win, ' ', ' ', ' ',' ',' ',' ',' ',' ');
+	wrefresh(win);
+	delwin(subwin);
+}
 
 void window_bordered::Draw(){
         if(IsUpdated()){
@@ -255,17 +262,21 @@ attack_dialog::attack_dialog(short x, short y, short width, short height, std::v
         window_bordered(x,y,width,height), message("Choose target:")
 {
 	itemscount = targets.size();
-	items = new ITEM*[itemscount];
-	chars = new char[itemscount];
+//	items = new ITEM*[itemscount+1]();
+	items = (ITEM **)calloc(itemscount + 1, sizeof(ITEM *));
+	chars = new std::string[itemscount];
 	strings = new std::string[itemscount];
 	for(ushort i=0; i<itemscount; i++){
-		chars[i] = targets[i]->GetImg();
-		strings[i] = targets[i]->GetName();
-		items[i] = new_item(&chars[i], strings[i].c_str());
+		chars[i] = "";
+		chars[i] += targets[i]->GetImg();
+		chars[i] += '\0';
+		strings[i] = "";
+		strings[i] += targets[i]->GetName();
+		items[i] = new_item(chars[i].c_str(), strings[i].c_str());
 		set_item_userptr(items[i], targets[i]);
 	}
-	items[itemscount] = NULL;
-	mymenu = new_menu(items);
+	items[itemscount] = (ITEM*)NULL;
+	mymenu = new_menu((ITEM**)items);
 	set_menu_win(mymenu, win);
 	set_menu_sub(mymenu, subwin);
 	set_menu_mark(mymenu, "->");
@@ -279,7 +290,9 @@ attack_dialog::~attack_dialog(){
 	for(ushort i=0; i<itemscount; i++){
 		free_item(items[i]);
 	}
-	endwin();
+	delete[] chars;
+	delete[] strings;
+	delete[] items;
 }
 
 void attack_dialog::Draw(){

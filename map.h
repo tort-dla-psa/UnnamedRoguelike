@@ -10,6 +10,7 @@ protected:
 	tile****tiles;
 	tile* air;
 	tile* borderstone;
+	std::vector<tile*> coverstone;
 	std::vector<tile*> surfstone;
 	std::vector<tile*> midstone;
 	std::vector<tile*> deepstone;
@@ -28,7 +29,12 @@ public:
 class Perlin: public map{
 	tile* FindTile(std::string name, std::vector<tile*> tiletypes);
 	tile* PickRand(std::vector<tile*> tiletypes);
+	tile* PickCover(std::vector<tile*> tiletypes);
+	tile* PickSurface(std::vector<tile*> tiletypes);
+	tile* PickMiddle(std::vector<tile*> tiletypes);
+	tile* PickDeep(std::vector<tile*> tiletypes);
 public:
 	Perlin(ushort width, ushort height, ushort depth, std::vector<tile*> tiletypes);
+	~Perlin();
 };
 #endif

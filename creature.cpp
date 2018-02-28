@@ -18,8 +18,9 @@ creature::creature(std::string name, char img, ushort hp, ushort dp):
 }
 
 creature::~creature(){
-	if(place!=NULL)
-		place->RemoveObject(this);
+	for(ushort i=0; i<inventorysize; i++)
+		inventory[i]=NULL;
+	delete[] inventory;
 }
 
 ushort creature::Attack(gameobject* target){

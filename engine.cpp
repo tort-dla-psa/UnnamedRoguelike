@@ -24,7 +24,7 @@ engine::engine(){
 	tileideas = FileOperations::LoadTiles(oreideas);
 	ShowTiletypes(tileideas);
 	getch();
-	mp = new Perlin(100,100,50,tileideas);
+	mp = new Perlin(100,100,128,tileideas);
 	pathfinder = new generator();
 	AddCreature("Adam",'T',10,1,0,1,0);
 	AddCreature("Eve",'i',10,1,1,1,0);
@@ -42,18 +42,29 @@ engine::engine(){
 engine::~engine(){
 	delete mp;
 	delete win;
-	for(short i=0; i<creatures.size(); i++)
-			delete creatures[i];
+	delete pathfinder;
+	for(auto c:creatures){
+		delete c;
+	}
 	creatures.clear();
-	
-	for(short i=0; i<items.size(); i++)
-			delete items[i];
+	for(auto i:items){
+		delete i;
+	}
 	items.clear();
-	
-	for(short i=0; i<materials.size(); i++)
-			delete materials[i];
+	for(auto m:materials){
+		delete m;
+	}
 	materials.clear();
+	for(auto o:oreideas){
+		delete o;
+	}
+	oreideas.clear();
+	for(auto t:tileideas){
+		delete t;
+	}
+	tileideas.clear();
 }
+
 void engine::DrawRecurse(ushort x, ushort y, ushort z, ushort iter, ushort max){
 	tile* temp = mp->GetTile(x+win->GetCamOffsetX(),y+win->GetCamOffsetY(),z);
 	if(iter>=max||!temp){
@@ -130,6 +141,8 @@ void engine::DoGravity(){
 
 creature* engine::AddCreature(std::string name, char img, ushort hp, ushort dp, ushort x, ushort y, ushort z){
 	tile* temptile = mp->GetTile(x,y,z);
+	if(!temptile)	
+		return nullptr;
 	if(temptile->IsSpace()){
 		creature* temp = new creature(name, img, hp, dp);
 		temp->Move((tilewspace*)temptile);
@@ -140,7 +153,7 @@ creature* engine::AddCreature(std::string name, char img, ushort hp, ushort dp, 
 		}
 		return temp;
 	}
-	return NULL;
+	return nullptr;
 }
 void engine::MovePlayer(const int keycode){
 	short* dirs = GetDir(keycode);
@@ -162,6 +175,8 @@ void engine::MoveCam(const int keycode){
 	short* dirs = GetDir(keycode);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
+	if(!temptile)	
+		return;
 	win->CamFollow(temptile);
 	delete[] dirs;
 }
@@ -169,6 +184,9 @@ void engine::PerformAttack(const int keycode){
 	short* dirs = GetDir(keycode);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
+	if(!temptile){
+		return;
+	}
 	if(temptile->IsSpace()){
 		std::vector<gameobjectmovable*> objects =((tilewspace*)temptile)->GetObjects();
 		ushort objectssize = objects.size();
@@ -224,7 +242,7 @@ void engine::PickUp(const int keycode){
 	short* dirs = GetDir(keycode);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
-	if(temptile->IsSpace()){
+	if(temptile&&temptile->IsSpace()){
 		tilewspace* temptile2 = (tilewspace*) temptile;
 		gameobjectmovable* tempitem = (temptile2->GetObjects())[0];
 		if(tempitem!=NULL){
@@ -270,7 +288,10 @@ void engine::InitKeys(){
 	win->AddKey('g',win->iKEY_PICK_UP);
 	win->AddKey('h',win->iKEY_DROP);
 	win->AddKey('i',win->iKEY_OPEN_INVENTORY);
+	win->AddKey('>',win->iKEY_DOWNZ);
+	win->AddKey('<',win->iKEY_UPZ);
 }
+
 void engine::HandleKey(char ch){
 	const int keycode = win->HandleKey(ch);
 	if(keycode==win->iKEYCODE_PLAYER_MOVE_UP||
@@ -348,9 +369,7 @@ short* engine::GetDir(const int keycode){
 	}
 	return new short[3]{x,y,z};
 }
-void engine::WriteLog(std::string mes){
-	win->WriteToChat(mes);
-}
+
 void engine::WriteLog(gameobject* target, ushort dp){
 	std::string mes = "You hit "+target->GetName()+"("+target->GetImg()+") , "+std::to_string(dp)+" dp";
 	win->WriteToChat(mes);

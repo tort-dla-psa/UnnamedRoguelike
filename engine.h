@@ -44,6 +44,5 @@ public:
 	engine();
 	~engine();
 	void MainLoop();
-	void WriteLog(std::string mes);
 };
 #endif
