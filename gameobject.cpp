@@ -10,7 +10,6 @@ gameobject::gameobject(){
 
 gameobject::~gameobject(){}
 
-
 void gameobject::SetName(std::string name){	this->name = name;}
 void gameobject::SetImg(char img){	this->img = img;}
 void gameobject::SetMat(material* mat){	this->mat = mat;}
@@ -28,7 +27,7 @@ std::string gameobject::GetName(){	return name;}
 char gameobject::GetImg(){	return img;}
 creature* gameobject::GetOwner(){	return owner;}
 material* gameobject::GetMat(){	return mat;}
-
+bool gameobject::IsMovable(){	return false;}
 
 gameobjectmovable::gameobjectmovable():
 	gameobject()
@@ -49,7 +48,10 @@ gameobjectmovable::gameobjectmovable(tilewspace* place):
 	place = nullptr;
 }
 
-gameobjectmovable::~gameobjectmovable(){}
+gameobjectmovable::~gameobjectmovable(){
+	if(place)
+		place->RemoveObject(this);
+}
 
 creature* gameobjectmovable::GetHolder(){	return holder;}
 tilewspace* gameobjectmovable::GetPlace(){	return place;}
@@ -83,7 +85,7 @@ void gameobjectmovable::Move(creature* newholder){
 ushort gameobjectmovable::GetX(){	return (place)?place->GetX():holder->GetX();}
 ushort gameobjectmovable::GetY(){	return (place)?place->GetY():holder->GetY();}
 ushort gameobjectmovable::GetZ(){	return (place)?place->GetZ():holder->GetZ();}
-
+bool gameobjectmovable::IsMovable(){	return true;}
 
 gameobjectstatic::gameobjectstatic(){}
 

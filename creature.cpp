@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "tile.h"
 #include "item.h"
 #include "creature.h"
@@ -17,8 +18,9 @@ creature::creature(std::string name, char img, ushort hp, ushort dp):
 }
 
 creature::~creature(){
-	if(place!=NULL)
-		place->RemoveObject(this);
+	for(ushort i=0; i<inventorysize; i++)
+		inventory[i]=NULL;
+	delete[] inventory;
 }
 
 ushort creature::Attack(gameobject* target){
@@ -28,6 +30,18 @@ ushort creature::Attack(gameobject* target){
 			inhand->GetWeight();
 	}
 	target->GetDamage(newdp);
+	if(target->IsMovable()){
+		gameobjectmovable* temp = (gameobjectmovable*) target;
+		if(target->GetHp()>0){
+			if(!IsAttacked(temp)){
+				attackedobjects.push_back(temp);
+			}
+		}else{
+			if(IsAttacked(temp)){
+				attackedobjects.erase(std::find(attackedobjects.begin(),attackedobjects.end(),temp),attackedobjects.end());
+			}
+		}
+	}
 	return newdp;
 }
 
@@ -99,3 +113,10 @@ ushort creature::GetSightSize(){	return sightsize;}
 gameobjectmovable* creature::GetItem(ushort place){	return inventory[place];}
 gameobjectmovable* creature::GetInHand(){		return inhand;}
 std::vector<tilewspace*> creature::GetPath(){	return path;}
+bool creature::IsAttacked(gameobjectmovable* target){
+	for(auto it:attackedobjects){
+		if(it==target)
+			return true;
+	}
+	return false;
+}

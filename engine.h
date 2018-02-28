@@ -12,13 +12,12 @@
 #include"tile.h"
 #include"map.h"
 #include"material.h"
-#include"interface.h"
+#include"./interface/interface.h"
 #include"pathfinding.h"
 
 class engine{
 	map* mp;
 	creature* player;
-	camera* cam;
 	interface* win;
 	generator* pathfinder;
 	std::vector<material*> materials;
@@ -26,26 +25,24 @@ class engine{
 	std::vector<item*> items;
 	std::vector<tile*> tileideas;
 	std::vector<creature*> creatures;
-	void WriteLog(tile* place, ushort dp);
-	void WriteLog(creature* target, ushort dp);
-	void DelCreature(creature* cr);
+	void WriteLog(gameobject* target, ushort dp);
+	void DelObject(gameobjectmovable* it);
 	item* CreateItem(char img, material* materia);
 	item* CreateItem(char img, material* materia, ushort x, ushort y, ushort z);
 	creature* AddCreature(std::string name, char img, ushort hp, ushort dp, ushort x, ushort y, ushort z);
-	void PickUp(char dir);
-	void DelItem(item* target);
-	void MovePlayer(char dir);
-	void MoveCam(char dir);
-	void PerformAttack(char dir);
+	void PickUp(const int keycode);
+	void MovePlayer(const int keycode);
+	void MoveCam(const int keycode);
+	void PerformAttack(const int keycode);
 	void DrawMap();
 	void DoGravity();
 	void HandleKey(char ch);
-	short* GetDir(char ch);
-	void drawrecurse(ushort x, ushort y, ushort z, ushort iter, ushort max);
+	short* GetDir(const int keycode);
+	void DrawRecurse(ushort x, ushort y, ushort z, ushort iter, ushort max);
+	void InitKeys();
 public:
 	engine();
 	~engine();
 	void MainLoop();
-	void WriteLog(std::string mes);
 };
 #endif

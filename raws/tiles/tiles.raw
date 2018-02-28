@@ -17,6 +17,23 @@ img:_
 name:dirt
 dropchance:0.10
 dropproduct:dirt pile
+depthtype:cover
+]
+
+[
+img:s
+name:sandstone
+dropchance:0.15
+dropproduct:sandstone pebbles
+depthtype:surface
+]
+
+[
+img:f
+name:flint
+dropchance:0.15
+dropproduct:flint pebbles
+depthtype:surface
 ]
 
 [
@@ -24,6 +41,15 @@ img:o
 name:granite
 dropchance:0.15
 dropproduct:granite boulder
+depthtype:middle
+]
+
+[
+img:r
+name:diorite
+dropchance:0.15
+dropproduct:diorite boulder
+depthtype:middle
 ]
 
 [
@@ -31,4 +57,13 @@ img:m
 name:marble
 dropchance:0.15
 dropproduct:marble boulder
+depthtype:deep
+]
+
+[
+img:q
+name:quartzite
+dropchance:0.15
+dropproduct:quartzite boulder
+depthtype:deep
 ]

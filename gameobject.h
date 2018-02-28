@@ -22,7 +22,7 @@ protected:
 	material* mat;
 public:
 	gameobject();
-	~gameobject();
+	virtual ~gameobject();
 
 	void SetName(std::string name);
 	void SetImg(char img);
@@ -41,6 +41,7 @@ public:
 	std::string GetName();
         virtual char GetImg();
 	material* GetMat();
+	virtual bool IsMovable();
 };
 
 class gameobjectmovable:public gameobject{
@@ -51,7 +52,7 @@ public:
 	gameobjectmovable();
 	gameobjectmovable(creature* holder);
 	gameobjectmovable(tilewspace* place);
-	~gameobjectmovable();
+	virtual ~gameobjectmovable();
 
 	ushort GetX();
 	ushort GetY();
@@ -60,6 +61,7 @@ public:
 	void Move(tilewspace* newplace);
         creature* GetHolder();
         tilewspace* GetPlace();
+	bool IsMovable() override;
 };
 
 class gameobjectstatic:public gameobject{
@@ -69,7 +71,7 @@ public:
 	gameobjectstatic();
 	gameobjectstatic(vect3i coords);
 	gameobjectstatic(ushort x, ushort y, ushort z);
-	~gameobjectstatic();
+	virtual ~gameobjectstatic();
 
 	ushort GetX();
 	ushort GetY();

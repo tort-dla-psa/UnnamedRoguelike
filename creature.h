@@ -11,6 +11,7 @@ class creature:public gameobjectmovable{
 	ushort dp;
 	ushort sightsize, inventorysize;
 	std::vector<tilewspace*> path;
+	std::vector<gameobjectmovable*> attackedobjects;
 	gameobjectmovable** inventory;
 	gameobjectmovable* inhand;
 	ushort itemcount;
@@ -35,5 +36,6 @@ public:
         ushort GetItemsCount();
         ushort GetSightSize();
         std::vector<tilewspace*> GetPath();
+	bool IsAttacked(gameobjectmovable* target);
 };
 #endif

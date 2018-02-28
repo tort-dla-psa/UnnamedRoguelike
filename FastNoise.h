@@ -43,19 +43,19 @@ public:
 	void SetSeed(int seed);
 	int GetSeed() const { return m_seed; }
 
-	void SetFrequency(double frequency) { m_frequency = frequency; }							// Default: 0.01
+	void SetFrequency(double frequency) { m_frequency = frequency; }// Default: 0.01
 	double GetFrequency() const { return m_frequency; }
 	
-	void SetNoiseType(NoiseType noiseType) { m_noiseType = noiseType; }							// Default: Simplex
+	void SetNoiseType(NoiseType noiseType) { m_noiseType = noiseType; }// Default: Simplex
 	NoiseType GetNoiseType() const { return m_noiseType; }
 
-	void SetFractalOctaves(int octaves) { m_octaves = octaves; CalculateFractalBounding(); }	// Default: 3
+	void SetFractalOctaves(int octaves) { m_octaves = octaves; CalculateFractalBounding(); }// Default: 3
 	int GetFractalOctaves() const { return m_octaves; }
 	
-	void SetFractalLacunarity(double lacunarity) { m_lacunarity = lacunarity; }					// Default: 2.0
+	void SetFractalLacunarity(double lacunarity) { m_lacunarity = lacunarity; }// Default: 2.0
 	double GetFractalLacunarity() const { return m_lacunarity; }
 
-	void SetFractalGain(double gain) { m_gain = gain; CalculateFractalBounding(); }				// Default: 0.5
+	void SetFractalGain(double gain) { m_gain = gain; CalculateFractalBounding(); }// Default: 0.5
 	double GetFractalGain() const { return m_gain; }
 
 	//2D

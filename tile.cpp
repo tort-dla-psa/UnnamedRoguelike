@@ -19,13 +19,15 @@ tile::tile(ushort x, ushort y, ushort z, tile* sample):
 	vect3i sizes { 100, 100, 100 };
 	SetSizes(sizes);
 	this->dropchance = sample->GetChance();
+	this->depth = depth;
 }
 
-tile::tile(char img, std::string name, double dropchance, item* ore):
+tile::tile(char img, std::string name, double dropchance, item* ore, tileenums::DepthType depth):
 	gameobjectstatic()
 {
 	vect3i sizes { 100, 100, 100 };
 	this->dropchance = dropchance;
+	this->depth = depth;
 	SetSizes(sizes);
 	SetImg(img);
 	SetName(name);
@@ -40,6 +42,7 @@ void tile::SetOre(item* ore){	this->ore = ore;}
 item* tile::GetOre(){	return ore;}
 double tile::GetChance(){	return dropchance;}
 char tile::GetImg(){	return img;}
+tileenums::DepthType tile::GetDepthType(){	return depth;}
 
 tilewspace::tilewspace(ushort x, ushort y, ushort z, tilewspace* sample):
 	tile(x, y, z)
@@ -52,10 +55,11 @@ tilewspace::tilewspace(ushort x, ushort y, ushort z, tilewspace* sample):
 	vect3i sizes { 100, 100, 100 };
 	SetSizes(sizes);
 	this->dropchance = 0;
+	this->depth = sample->GetDepthType();
 }
 
-tilewspace::tilewspace(char img, std::string name, item* ore):
-	tile(img,name,0,ore){};
+tilewspace::tilewspace(char img, std::string name, item* ore, tileenums::DepthType depth):
+	tile(img,name,0,ore,depth){};
 
 tilewspace::~tilewspace(){};
 

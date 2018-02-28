@@ -6,28 +6,34 @@
 
 class creature;
 class item;
+namespace tileenums{
+	enum DepthType { none, cover, surface, middle, deep };
+}
 class tile:public gameobjectstatic{
 protected:
         ushort hp;
         double dropchance;
+	tileenums::DepthType depth;
         item* ore;
 public:
+
         tile(ushort x, ushort y, ushort z);
         tile(ushort x, ushort y, ushort z, tile* sample);
-	tile(char img, std::string name, double dropchance, item* ore);
-        ~tile();
+	tile(char img, std::string name, double dropchance, item* ore, tileenums::DepthType depth);
+        virtual ~tile();
         
 	virtual bool IsSpace();
 	void SetOre(item* ore);
         item* GetOre();
         double GetChance();
 	char GetImg() override;
+	tileenums::DepthType GetDepthType();
 };
 class tilewspace:public tile{
         std::vector<gameobjectmovable*> objects;
 public:
         tilewspace(ushort x, ushort y, ushort z, tilewspace* sample);
-	tilewspace(char img, std::string name, item* ore);
+	tilewspace(char img, std::string name, item* ore, tileenums::DepthType depth);
         ~tilewspace();
 
 	bool IsSpace() override;
