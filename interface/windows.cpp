@@ -54,6 +54,56 @@ void worldwindow::Draw(short x, short y, char ch, short color){
         mvwaddch(win,y,x,ch | COLOR_PAIR(color));
         SetUpdated(true);
 }
+
+mainmenu::mainmenu(short width, short height, std::vector<mainmenuitem*> menuitems):
+	window(width, height)
+{
+	itemscount = menuitems.size();
+	items = new ITEM*[itemscount+1]();
+	menuchar = "*";
+	strings = new std::string[itemscount];
+	for(ushort i=0; i<itemscount; i++){
+		strings[i] = "";
+		strings[i] += menuitems[i]->str;
+		items[i] = new_item(menuchar.c_str(), strings[i].c_str());
+		set_item_userptr(items[i], menuitems[i]);
+	}
+	items[itemscount] = (ITEM*)NULL;
+	mymenu = new_menu((ITEM**)items);
+	set_menu_win(mymenu, win);
+	set_menu_sub(mymenu, win);
+	set_menu_mark(mymenu, "->");
+	set_menu_format(mymenu, 5,1);
+	updated = true;
+}
+
+mainmenu::~mainmenu(){
+	unpost_menu(mymenu);
+	free_menu(mymenu);
+	for(ushort i=0; i<itemscount; i++){
+		free_item(items[i]);
+	}
+	delete[] strings;
+	delete[] items;
+}
+void mainmenu::Draw(){
+	if(updated){
+		//wprintw(subwin, "%s", message.c_str());
+		post_menu(mymenu);
+		wnoutrefresh(win);
+		SetUpdated(false);
+        }
+}
+void mainmenu::FocusUp(){
+	menu_driver(mymenu, REQ_UP_ITEM);
+	updated = true;
+}
+void mainmenu::FocusDown(){
+	menu_driver(mymenu, REQ_DOWN_ITEM);
+	updated = true;
+}
+mainmenuitem* mainmenu::GetFocused(){	item_userptr(current_item(mymenu));}
+
 window_bordered::window_bordered(short x, short y, short width, short height):
         x(x),y(y),window(width,height)
 {
@@ -262,8 +312,7 @@ attack_dialog::attack_dialog(short x, short y, short width, short height, std::v
         window_bordered(x,y,width,height), message("Choose target:")
 {
 	itemscount = targets.size();
-//	items = new ITEM*[itemscount+1]();
-	items = (ITEM **)calloc(itemscount + 1, sizeof(ITEM *));
+	items = new ITEM*[itemscount+1]();
 	chars = new std::string[itemscount];
 	strings = new std::string[itemscount];
 	for(ushort i=0; i<itemscount; i++){

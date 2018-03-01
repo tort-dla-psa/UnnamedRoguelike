@@ -3,6 +3,7 @@
 #include<string>
 #include<ncurses.h>
 #include<menu.h>
+#include"iConstInt.h"
 
 class myColor;
 class myPair;
@@ -37,6 +38,26 @@ public:
         using window::Draw;
         void Draw(short x, short y, char ch);
         void Draw(short x, short y, char ch, short color);
+};
+
+struct mainmenuitem{
+	iConstInt code;
+	std::string str;
+};
+class mainmenu:public window{
+        std::string message;
+	ITEM** items;
+	ushort itemscount;
+	std::string menuchar;
+        std::string* strings;
+	MENU* mymenu;
+public:
+	mainmenu(short width, short height, std::vector<mainmenuitem*> menuitems);
+	~mainmenu();
+	void FocusUp();
+	void FocusDown();
+	void Draw();
+	mainmenuitem* GetFocused();
 };
 
 class window_bordered:public window{
@@ -85,7 +106,6 @@ public:
 
 class attack_dialog:public window_bordered{
         std::string message;
-	std::vector<gameobjectmovable*>* targetspointer;
 	ITEM** items;
 	ushort itemscount;
 	ITEM* focused_item;
