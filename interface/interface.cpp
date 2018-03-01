@@ -5,12 +5,18 @@
 #include"MyColor.h"
 #include"MyPair.h"
 #include"windows.h"
-#include"KeyTie.h"
 #include"camera.h"
 #include"../gameobject.h"
 #include"../creature.h"
 
-//test
+keytie::keytie(char key, iConstInt returncode):
+	key(key),returncode(returncode){}
+keytie::~keytie(){}
+void keytie::SetKey(char key){	this->key = key;}
+void keytie::SetCode(iConstInt code){	this->returncode = code;}
+char keytie::GetChar(){	return key;}
+iConstInt keytie::GetCode(){	return returncode;}
+
 interface::~interface(){
 	delete playerstat,
 	       chat,
@@ -37,6 +43,10 @@ interface::interface(){
 	initscr();
 	noecho();
 	curs_set(FALSE);
+	if(has_colors()==false){
+		endwin();
+		exit(1);
+	}
 	start_color();
 	colors.push_back(new myColor(0,0,0,"black",colors.size()));	//0
 	colors.push_back(new myColor(1000,1000,1000,"white",colors.size()));	//1
@@ -64,9 +74,15 @@ interface::interface(){
 	pairs.push_back(new myPair(colors[0],colors[10],pairs.size()+1));	//11
 	pairs.push_back(new myPair(colors[0],colors[11],pairs.size()+1));	//12
 	pairs.push_back(new myPair(colors[0],colors[12],pairs.size()+1));	//13
-	short width,height;
 	getmaxyx(stdscr,height,width);
 	keypad(stdscr,true);
+	pastkey = pastkeycode = 0;
+	InitKeys();
+	InitKeycodes();
+	wrefresh(stdscr);
+}
+
+void interface::OpenGameInterface(){
 	mainscr = new worldwindow(width,height+1);
 	playerstat = new window_playerstats(width/6-1, height-10, width/6, 10);
 	chat = new window_chat(0,height-10,width/6,10,50);
@@ -76,14 +92,62 @@ interface::interface(){
 	wins.push_back(chat);
 	SetFocus(mainscr);
 }
-
-void interface::AddKey(char key, int keycode){
+int interface::GetNextKey(){		return ++pastkey;}
+int interface::GetNextKeycode(){	return --pastkeycode;}
+void interface::InitKeys(){
+	iKEY_UP=	iConstInt(GetNextKey());
+	iKEY_DOWN=	iConstInt(GetNextKey());
+	iKEY_LEFT=	iConstInt(GetNextKey());
+	iKEY_RIGHT=	iConstInt(GetNextKey());
+	iKEY_UPZ=	iConstInt(GetNextKey());
+	iKEY_DOWNZ=	iConstInt(GetNextKey());
+	iKEY_ATTACK_UP=	iConstInt(GetNextKey());
+	iKEY_ATTACK_DOWN=	iConstInt(GetNextKey());
+	iKEY_ATTACK_LEFT=	iConstInt(GetNextKey());
+	iKEY_ATTACK_RIGHT=	iConstInt(GetNextKey());
+	iKEY_PICK_UP=	iConstInt(GetNextKey());
+	iKEY_DROP=	iConstInt(GetNextKey());
+	iKEY_OPEN_INVENTORY=	iConstInt(GetNextKey());
+	iKEY_OPEN_CHAT=	iConstInt(GetNextKey());
+	iKEY_CAMERA_FLY=	iConstInt(GetNextKey());
+	iKEY_ESC=	iConstInt(GetNextKey());
+	iKEY_ENTER=	iConstInt(GetNextKey());
+	iKEY_PGUP=	iConstInt(GetNextKey());
+	iKEY_PGDOWN=	iConstInt(GetNextKey());
+}
+void interface::InitKeycodes(){
+	iKEYCODE_PLAYER_MOVE_UP=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_MOVE_DOWN=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_MOVE_LEFT=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_MOVE_RIGHT=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_ATTACK_UP=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_ATTACK_DOWN=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_ATTACK_LEFT=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_ATTACK_RIGHT=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_ATTACK_UPZ=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_ATTACK_DOWNZ=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_PICK_UP=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_DROP=	iConstInt(GetNextKeycode());
+	iKEYCODE_CAM_MOVE_UP=	iConstInt(GetNextKeycode());
+	iKEYCODE_CAM_MOVE_DOWN=	iConstInt(GetNextKeycode());
+	iKEYCODE_CAM_MOVE_LEFT=	iConstInt(GetNextKeycode());
+	iKEYCODE_CAM_MOVE_RIGHT=	iConstInt(GetNextKeycode());
+	iKEYCODE_CAM_MOVE_UPZ=	iConstInt(GetNextKeycode());
+	iKEYCODE_CAM_MOVE_DOWNZ=	iConstInt(GetNextKeycode());
+	iKEYCODE_OPEN_INVENTORY=	iConstInt(GetNextKeycode());
+	iKEYCODE_OPEN_CHAT=	iConstInt(GetNextKeycode());
+	iKEYCODE_ATTACK_DIALOG_OK=	iConstInt(GetNextKeycode());
+	iKEYCODE_ATTACK_DIALOG_CLOSE=	iConstInt(GetNextKeycode());
+	iKEYCODE_MAINMENU_NEWGAME=	iConstInt(GetNextKeycode());
+	iKEYCODE_MAINMENU_QUIT=	iConstInt(GetNextKeycode());
+}
+void interface::AddKey(char key, iConstInt keycode){
 	keys.push_back(new keytie(key,keycode));
 }
-int interface::HandleKey(char key){
+iConstInt interface::HandleKey(char key){
 	for(auto k:keys){
 		if(k->GetChar()==key){
-			const int code = k->GetCode();
+			iConstInt code = k->GetCode();
 			if(mainscr->IsFocused()){
 				if(!cam->Flying()){
 					if(code==iKEY_UP){
@@ -167,8 +231,51 @@ int interface::HandleKey(char key){
 					SetFocus(mainscr);
 				}
 			}
+			break;
 		}
 	}
+}
+
+iConstInt interface::ShowMainMenu(){
+	std::vector<mainmenuitem*> items;
+	mainmenuitem* newgame = new mainmenuitem();
+	newgame->code = iKEYCODE_MAINMENU_NEWGAME;
+	newgame->str = "New Game";
+	mainmenuitem* quit = new mainmenuitem();
+	quit->code = iKEYCODE_MAINMENU_QUIT;
+	quit->str = "Quit";
+	items.push_back(newgame);
+	items.push_back(quit);
+	menu = new mainmenu(width,height,items);
+	menu->Draw();
+	doupdate();
+	iConstInt key;
+	while(!(key==iKEYCODE_MAINMENU_QUIT)&&
+		!(key==iKEYCODE_MAINMENU_NEWGAME))
+	{
+		menu->Draw();
+		doupdate();
+		char c = getch();
+		for(auto k:keys){
+			if(k->GetChar()==c){
+				iConstInt code = k->GetCode();
+
+				if(code==iKEY_UP){
+					menu->FocusUp();
+				}else if(code==iKEY_DOWN){
+					menu->FocusDown();
+				}else if(code==iKEY_ENTER){
+					key = menu->GetFocused()->code;
+				}
+			}
+		}
+	}
+	if(!(key==iKEYCODE_MAINMENU_QUIT)){
+		OpenGameInterface();
+	}
+	delete newgame,quit,menu;
+	items.clear();
+	return key;
 }
 void interface::AssignPlayer(creature* player){
 	playerstat->AssignPlayer(player);
