@@ -4,6 +4,9 @@
 #include "material.h"
 #include <ncurses.h>
 #include <algorithm>
+#include "interface/MyPalette.h"
+#include "interface/MyColor.h"
+#include "interface/MyPair.h"
 
 tile::tile(ushort x, ushort y, ushort z):
 	gameobjectstatic(x,y,z){}
@@ -15,14 +18,15 @@ tile::tile(ushort x, ushort y, ushort z, tile* sample):
 	SetOre(sample->GetOre());
 	SetMat(sample->GetMat());
 	SetImg(sample->GetImg());
-	SetHp(100);
+	SetColor(sample->GetColor());
+	SetHp(10);
 	vect3i sizes { 100, 100, 100 };
 	SetSizes(sizes);
 	this->dropchance = sample->GetChance();
 	this->depth = depth;
 }
 
-tile::tile(char img, std::string name, double dropchance, item* ore, tileenums::DepthType depth):
+tile::tile(char img, std::string name, double dropchance, item* ore, tileenums::DepthType depth, myPair* color):
 	gameobjectstatic()
 {
 	vect3i sizes { 100, 100, 100 };
@@ -33,6 +37,7 @@ tile::tile(char img, std::string name, double dropchance, item* ore, tileenums::
 	SetName(name);
 	SetOre(ore);
 	SetMat(ore->GetMat());
+	SetColor(color);
 }
 
 tile::~tile(){};
@@ -43,6 +48,8 @@ item* tile::GetOre(){	return ore;}
 double tile::GetChance(){	return dropchance;}
 char tile::GetImg(){	return img;}
 tileenums::DepthType tile::GetDepthType(){	return depth;}
+void tile::SetColor(myPair* color){	this->color = color;}
+myPair* tile::GetColor(){	return color;}
 
 tilewspace::tilewspace(ushort x, ushort y, ushort z, tilewspace* sample):
 	tile(x, y, z)
@@ -59,7 +66,7 @@ tilewspace::tilewspace(ushort x, ushort y, ushort z, tilewspace* sample):
 }
 
 tilewspace::tilewspace(char img, std::string name, item* ore, tileenums::DepthType depth):
-	tile(img,name,0,ore,depth){};
+	tile(img,name,0,ore,depth,nullptr){};
 
 tilewspace::~tilewspace(){};
 

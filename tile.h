@@ -6,6 +6,7 @@
 
 class creature;
 class item;
+class myPair;
 namespace tileenums{
 	enum DepthType { none, cover, surface, middle, deep };
 }
@@ -15,11 +16,12 @@ protected:
         double dropchance;
 	tileenums::DepthType depth;
         item* ore;
+	myPair* color;
 public:
 
         tile(ushort x, ushort y, ushort z);
         tile(ushort x, ushort y, ushort z, tile* sample);
-	tile(char img, std::string name, double dropchance, item* ore, tileenums::DepthType depth);
+	tile(char img, std::string name, double dropchance, item* ore, tileenums::DepthType depth, myPair* color);
         virtual ~tile();
         
 	virtual bool IsSpace();
@@ -28,6 +30,8 @@ public:
         double GetChance();
 	char GetImg() override;
 	tileenums::DepthType GetDepthType();
+	void SetColor(myPair* color);
+	myPair* GetColor();
 };
 class tilewspace:public tile{
         std::vector<gameobjectmovable*> objects;
