@@ -15,4 +15,4 @@ myPair::~myPair(){
 
 myColor* myPair::GetFg(){       return fg;}
 myColor* myPair::GetBg(){       return bg;}
-
+short myPair::GetNum(){	return num;}

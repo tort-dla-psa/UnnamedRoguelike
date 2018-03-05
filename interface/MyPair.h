@@ -12,5 +12,6 @@ public:
         ~myPair();
         myColor* GetFg();
         myColor* GetBg();
+	short GetNum();
 };
 #endif
