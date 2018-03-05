@@ -1,4 +1,7 @@
 #include "material.h"
+#include "interface/MyPair.h"
+#include "interface/MyColor.h"
+#include "interface/MyPalette.h"
 #include "tile.h"
 #include "item.h"
 #include<fstream>
@@ -52,13 +55,14 @@ namespace FileOperations{
 		return ores;
 	}
 
-	static std::vector<tile*> LoadTiles(std::vector<item*> ores){
+	static std::vector<tile*> LoadTiles(std::vector<item*> ores, mypalette* pal){
 		std::vector<tile*> tiles;
 		std::ifstream tilesfile("raws/tiles/tiles.raw");
 		std::string temptype="none";
 		std::string val="none";
 		std::string orename="none";
 		std::string name = "none";
+		myPair* colors = pal->GetPair(1,0);
 		tileenums::DepthType depth= tileenums::DepthType::none;
 		char img='@';
 		item* ore = NULL;
@@ -71,13 +75,14 @@ namespace FileOperations{
 				if(ore->GetMat()->GetPass()){
 					tiles.push_back(new tilewspace(img,name,ore,depth));
 				}else{
-					tiles.push_back(new tile(img,name,dropchance,ore,depth));
+					tiles.push_back(new tile(img,name,dropchance,ore,depth,colors));
 				}
 				img='@';
 				name = "none";
 				orename = "none";
 				ore=NULL;
 				dropchance=0;
+				colors = pal->GetPair(1,0);
 				continue;
 			}
 			short pos = line.find(":");
@@ -97,6 +102,23 @@ namespace FileOperations{
 					if(element->GetName()==val)
 						ore=element;
 				}
+			}else if(temptype=="colors"){
+				short r1 = std::stoi(val.substr(0,val.find(",")));
+				val = val.substr(val.find(",")+1);
+				short g1 = std::stoi(val.substr(0,val.find(",")));
+				val = val.substr(val.find(",")+1);
+				short b1 = std::stoi(val.substr(0,val.find(":")));
+				val = val.substr(val.find(":")+1);
+
+				short r2 = std::stoi(val.substr(0,val.find(",")));
+				val = val.substr(val.find(",")+1);
+				short g2 = std::stoi(val.substr(0,val.find(",")));
+				val = val.substr(val.find(",")+1);
+				short b2 = std::stoi(val);
+
+				myColor* tryfg = pal->AddColor(r1,g1,b1);
+				myColor* trybg = pal->AddColor(r2,g2,b2);
+				colors = pal->AddToTable(tryfg,trybg);
 			}
 		}
 		tilesfile.close();

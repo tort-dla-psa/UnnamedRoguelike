@@ -13,13 +13,14 @@ void ShowTiletypes(std::vector<tile*> tiletypes){
 
 engine::engine(){
 	win = new interface();
+	//win->DrawPalette();
 	mp = nullptr;
 	pathfinder = nullptr;
 	InitKeys();
 	srand(time(NULL));
 	materials = FileOperations::LoadMaterials();
 	oreideas = FileOperations::LoadOres(materials);
-	tileideas = FileOperations::LoadTiles(oreideas);
+	tileideas = FileOperations::LoadTiles(oreideas, win->GetPalette());
 	//ShowTiletypes(tileideas);
 }
 
@@ -51,19 +52,19 @@ engine::~engine(){
 
 void engine::DrawRecurse(ushort x, ushort y, ushort z, ushort iter, ushort max){
 	tile* temp = mp->GetTile(x+win->GetCamOffsetX(),y+win->GetCamOffsetY(),z);
-	if(iter>=max||!temp){
-		win->DrawOnMap(x,y,'.',1+iter);
+	if(iter==max){
+		win->DrawOnMap(x,y,'.',iter);
 		return;
 	}
 	if(temp->IsSpace()){
 		tilewspace* temp2 = (tilewspace*) temp;
 		if(temp2->HasObjects()){
-			win->DrawOnMap(x,y,temp->GetImg(),1+iter);
+			win->DrawOnMap(x,y,temp->GetImg(),iter);
 			return;
 		}
 		DrawRecurse(x,y,z+1,iter+1,max);
 	}else{
-		win->DrawOnMap(x,y,temp->GetImg(),1+iter);
+		win->DrawOnMap(x,y,temp->GetImg(),temp->GetColor(),iter);
 	}
 }
 void engine::DrawMap(){
@@ -78,7 +79,7 @@ void engine::DrawMap(){
 	for(short i=0; i<winx; i++){
 		for(short j=0; j<winy; j++){
 			if(j+Y<0||i+X<0||j+Y>=mapY||i+X>=mapX){
-				win->DrawOnMap(i,j,' ', 1);
+				win->DrawOnMap(i,j,' ');
 				continue;
 			}
 			DrawRecurse(i,j,camZ,0,4);
