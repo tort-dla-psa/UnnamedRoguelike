@@ -16,7 +16,6 @@ protected:
         bool updated;
         bool focused;
         WINDOW* win;
-	myColor* fg;
 public:
 	window(short width, short height);
 	virtual ~window();
@@ -38,6 +37,7 @@ public:
         using window::Draw;
         void Draw(short x, short y, char ch);
         void Draw(short x, short y, char ch, short color);
+	void Draw(short x, short y, char ch, myPair* color);
 };
 
 struct mainmenuitem{
@@ -63,10 +63,12 @@ public:
 class window_bordered:public window{
 protected:
         WINDOW* subwin;
-        myPair* pair;
+        myPair* focusedbox;
+	myPair* regularbox;
         short x, y;
+	void DrawBox();
 public:
-        window_bordered(short x, short y, short width, short height);
+        window_bordered(short x, short y, short width, short height, myPair* focusedbox, myPair* regularbox);
         virtual ~window_bordered();
         void Draw()override;
         void Clear()override;
@@ -82,7 +84,7 @@ class window_chat:public window_bordered{
         short chatsize;
         short mescount;
 public:
-        window_chat(short x, short y, short width, short height, short chatsize);
+        window_chat(short x, short y, short width, short height, short chatsize, myPair* focusedbox, myPair* regularbox);
         ~window_chat();
         void Clear() override;
         void Draw() override;
@@ -95,7 +97,7 @@ class window_playerstats:public window_bordered{
         short itemhlght;
         creature* player;
 public:
-        window_playerstats(short x, short y, short width, short height);
+        window_playerstats(short x, short y, short width, short height, myPair* focusedbox, myPair* regularbox);
         ~window_playerstats();
         void AssignPlayer(creature* player);
         void FocusLeft();
@@ -113,7 +115,7 @@ class attack_dialog:public window_bordered{
         std::string* strings;
 	MENU* mymenu;
 public:
-        attack_dialog(short x, short y, short width, short height, std::vector<gameobjectmovable*> targets);
+        attack_dialog(short x, short y, short width, short height, std::vector<gameobjectmovable*> targets, myPair* focusedbox, myPair* regularbox);
         ~attack_dialog();
         void Draw() override;
 	void FocusUp();
