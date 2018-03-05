@@ -8,6 +8,7 @@
 #include"camera.h"
 #include"../gameobject.h"
 #include"../creature.h"
+#include"MyPalette.h"
 
 keytie::keytie(char key, iConstInt returncode):
 	key(key),returncode(returncode){}
@@ -21,20 +22,13 @@ interface::~interface(){
 	delete playerstat,
 	       chat,
 	       mainscr;
+	delete cam;
+	delete palette;
 	wins.clear();
-	for(auto c:colors){
-		delete c;
-	}
-	colors.clear();
-	for(auto p:pairs){
-		delete p;
-	}
-	pairs.clear();
 	for(auto k:keys){
 		delete k;
 	}
 	keys.clear();
-	delete cam;
 	clear();
 	endwin();
 }
@@ -48,32 +42,7 @@ interface::interface(){
 		exit(1);
 	}
 	start_color();
-	colors.push_back(new myColor(0,0,0,"black",colors.size()));	//0
-	colors.push_back(new myColor(1000,1000,1000,"white",colors.size()));	//1
-	colors.push_back(new myColor(500,500,500,"gray",colors.size()));	//2
-	colors.push_back(new myColor(1000,1000,200,"yelow",colors.size()));	//3
-	colors.push_back(new myColor(1000,200,1000,"violet",colors.size()));	//4
-	colors.push_back(new myColor(200,1000,1000,"cyan",colors.size())); 	//5
-	colors.push_back(new myColor(1000,200,200,"red",colors.size()));	//6
-	colors.push_back(new myColor(200,1000,200,"green",colors.size()));	//7
-	colors.push_back(new myColor(200,200,1000,"blue",colors.size()));	//8
-	colors.push_back(new myColor(800,800,800,"white2",colors.size()));	//9
-	colors.push_back(new myColor(600,600,600,"white3",colors.size()));	//10
-	colors.push_back(new myColor(400,400,400,"white4",colors.size()));	//11
-	colors.push_back(new myColor(200,200,200,"white5",colors.size()));	//12
-	pairs.push_back(new myPair(colors[1],colors[0],pairs.size()+1));	//1
-	pairs.push_back(new myPair(colors[0],colors[1],pairs.size()+1));	//2
-	pairs.push_back(new myPair(colors[2],colors[0],pairs.size()+1));	//3
-	pairs.push_back(new myPair(colors[3],colors[0],pairs.size()+1));	//4
-	pairs.push_back(new myPair(colors[4],colors[0],pairs.size()+1));	//5
-	pairs.push_back(new myPair(colors[5],colors[0],pairs.size()+1));	//6
-	pairs.push_back(new myPair(colors[6],colors[0],pairs.size()+1));	//7
-	pairs.push_back(new myPair(colors[7],colors[0],pairs.size()+1));	//8
-	pairs.push_back(new myPair(colors[8],colors[0],pairs.size()+1));	//9
-	pairs.push_back(new myPair(colors[0],colors[9],pairs.size()+1));	//10
-	pairs.push_back(new myPair(colors[0],colors[10],pairs.size()+1));	//11
-	pairs.push_back(new myPair(colors[0],colors[11],pairs.size()+1));	//12
-	pairs.push_back(new myPair(colors[0],colors[12],pairs.size()+1));	//13
+	palette = new mypalette();
 	getmaxyx(stdscr,height,width);
 	keypad(stdscr,true);
 	pastkey = pastkeycode = 0;
@@ -84,8 +53,8 @@ interface::interface(){
 
 void interface::OpenGameInterface(){
 	mainscr = new worldwindow(width,height+1);
-	playerstat = new window_playerstats(width/6-1, height-10, width/6, 10);
-	chat = new window_chat(0,height-10,width/6,10,50);
+	playerstat = new window_playerstats(width/6, height-10, width/6, 10, palette->GetPair(0,9),palette->GetPair(0,0));
+	chat = new window_chat(0,height-10,width/6,10,50, palette->GetPair(0,9),palette->GetPair(0,0));
 	attackdialog = nullptr;
 	wins.push_back(mainscr);
 	wins.push_back(playerstat);
@@ -296,8 +265,8 @@ void interface::CheckResize(){
 void interface::Draw(){
 	mainscr->Draw();
 	chat->Draw();
-	playerstat->Draw();
 	playerstat->PrintStats();
+	playerstat->Draw();
 	if(attackdialog)
 		attackdialog->Draw();
 	doupdate();
@@ -307,21 +276,23 @@ void interface::ClearMap(){
 	mainscr->Clear();
 }
 void interface::DrawOnMap(short x, short y,char ch){
-	mainscr->Draw(x,y,ch);
+	mainscr->Draw(x,y,ch,palette->GetPair(1,4));
 }
-void interface::DrawOnMap(short x, short y,char ch, short color){
-	if(color==1){
-		mainscr->Draw(x,y,ch, 2);
-	}else{
-		mainscr->Draw(x,y,ch, 8+color);
-	}
+void interface::DrawOnMap(short x, short y,char ch,short delta){
+	mainscr->Draw(x,y,ch,palette->GetDarker(palette->GetPair(1,0),delta));
+}
+void interface::DrawOnMap(short x, short y,char ch, myPair* color){
+	mainscr->Draw(x,y,ch,color);
+}
+void interface::DrawOnMap(short x, short y,char ch, myPair* color,short delta){
+	mainscr->Draw(x,y,ch,palette->GetDarker(color,delta));
 }
 void interface::ShowAttackDialog(std::vector<gameobjectmovable*> targets){
 	short width,height;
 	getmaxyx(stdscr,height,width);
-	ushort winx = width/6*2-1;
+	ushort winx = width/6*2;
 	ushort winy = height-10;
-	attackdialog = new attack_dialog(winx,winy,width/6,10,targets);
+	attackdialog = new attack_dialog(winx,winy,width/6,10,targets, palette->GetPair(0,9),palette->GetPair(0,0));
 	wins.push_back(attackdialog);
 	SetFocus(attackdialog);
 }
@@ -402,3 +373,19 @@ void interface::CamFollow(gameobjectmovable* target){	cam->Follow(target);}
 void interface::CamFollow(gameobjectstatic* target){	cam->Follow(target);}
 bool interface::CamFlying(){	return cam->Flying();}
 void interface::SetCamParameters(short width, short height){	cam->SetParams(width,height);}
+
+mypalette* interface::GetPalette(){	return palette;}
+void interface::DrawPalette(){
+	clear();
+	refresh();
+	int pairscount = palette->GetPairsCount();
+	for(int i=0; i<pairscount; i++){
+		for(int j=0; j<5; j++){
+			mvwaddch(stdscr, j, i, 'C' | COLOR_PAIR(palette->GetPair(i,j)->GetNum()));
+		}
+		refresh();
+		addch('\n');
+	}
+	refresh();
+	getch();
+}

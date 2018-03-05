@@ -2,6 +2,7 @@
 #define interface_h
 #include <vector>
 #include"iConstInt.h"
+
 class window;
 class window_bordered;
 class mainmenu;
@@ -11,6 +12,7 @@ class window_playerstats;
 class attack_dialog;
 class myColor;
 class myPair;
+class mypalette;
 class creature;
 class gameobjectmovable;
 class gameobjectstatic;
@@ -37,8 +39,7 @@ class interface{
 	window_chat* chat;
 	window_playerstats* playerstat;
 	attack_dialog* attackdialog;
-	std::vector<myColor*> colors;
-	std::vector<myPair*> pairs;
+	mypalette* palette;
 	std::vector<keytie*> keys;
 	short width,height;
 	int pastkey;
@@ -106,7 +107,9 @@ public:
 	void Draw();
 	void ClearMap();
 	void DrawOnMap(short x,short y,char ch);
-	void DrawOnMap(short x,short y,char ch, short color);
+	void DrawOnMap(short x,short y,char ch, short delta);
+	void DrawOnMap(short x,short y,char ch, myPair* color);
+	void DrawOnMap(short x,short y,char ch, myPair* color, short delta);
 	void SetFocus(window* win);
 	
 	void ShowAttackDialog(std::vector<gameobjectmovable*> targets);
@@ -138,5 +141,8 @@ public:
 	void CamFollow(gameobjectstatic* target);
 	bool CamFlying();
 	void SetCamParameters(short width, short height);
+
+	mypalette* GetPalette();
+	void DrawPalette();
 };
 #endif
