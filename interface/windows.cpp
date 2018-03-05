@@ -1,6 +1,7 @@
 #include<ncurses.h>
 #include"../creature.h"
 #include"windows.h"
+#include"MyPair.h"
 
 window::window(short width, short height):
         width(width),height(height)
@@ -54,8 +55,62 @@ void worldwindow::Draw(short x, short y, char ch, short color){
         mvwaddch(win,y,x,ch | COLOR_PAIR(color));
         SetUpdated(true);
 }
-window_bordered::window_bordered(short x, short y, short width, short height):
-        x(x),y(y),window(width,height)
+void worldwindow::Draw(short x, short y, char ch, myPair* color){
+        mvwaddch(win,y,x,ch | COLOR_PAIR(color->GetNum()));
+        SetUpdated(true);
+}
+
+mainmenu::mainmenu(short width, short height, std::vector<mainmenuitem*> menuitems):
+	window(width, height)
+{
+	itemscount = menuitems.size();
+	items = new ITEM*[itemscount+1]();
+	menuchar = "*";
+	strings = new std::string[itemscount];
+	for(ushort i=0; i<itemscount; i++){
+		strings[i] = "";
+		strings[i] += menuitems[i]->str;
+		items[i] = new_item(menuchar.c_str(), strings[i].c_str());
+		set_item_userptr(items[i], menuitems[i]);
+	}
+	items[itemscount] = (ITEM*)NULL;
+	mymenu = new_menu((ITEM**)items);
+	set_menu_win(mymenu, win);
+	set_menu_sub(mymenu, win);
+	set_menu_mark(mymenu, "->");
+	set_menu_format(mymenu, 5,1);
+	updated = true;
+}
+
+mainmenu::~mainmenu(){
+	unpost_menu(mymenu);
+	free_menu(mymenu);
+	for(ushort i=0; i<itemscount; i++){
+		free_item(items[i]);
+	}
+	delete[] strings;
+	delete[] items;
+}
+void mainmenu::Draw(){
+	if(updated){
+		//wprintw(subwin, "%s", message.c_str());
+		post_menu(mymenu);
+		wnoutrefresh(win);
+		SetUpdated(false);
+        }
+}
+void mainmenu::FocusUp(){
+	menu_driver(mymenu, REQ_UP_ITEM);
+	updated = true;
+}
+void mainmenu::FocusDown(){
+	menu_driver(mymenu, REQ_DOWN_ITEM);
+	updated = true;
+}
+mainmenuitem* mainmenu::GetFocused(){	item_userptr(current_item(mymenu));}
+
+window_bordered::window_bordered(short x, short y, short width, short height, myPair* focusedbox, myPair* regularbox):
+        x(x),y(y),window(width,height),focusedbox(focusedbox),regularbox(regularbox)
 {
         win = newwin(height, width, y, x);
         subwin = derwin(win,height-2, width -2, 1, 1);
@@ -67,9 +122,20 @@ window_bordered::~window_bordered()
 	delwin(subwin);
 }
 
+void window_bordered::DrawBox(){
+	if(!focused){
+		wattron(win,COLOR_PAIR(regularbox->GetNum()));
+		box(win,0,0);
+		wattroff(win,COLOR_PAIR(regularbox->GetNum()));
+	}else{
+		wattron(win,COLOR_PAIR(focusedbox->GetNum()));
+		box(win,0,0);
+		wattroff(win,COLOR_PAIR(focusedbox->GetNum()));
+	}
+}
 void window_bordered::Draw(){
-        if(IsUpdated()){
-                box(win,0,0);
+        if(updated){
+		DrawBox();
                 wnoutrefresh(win);
                 wnoutrefresh(subwin);
                 SetUpdated(false);
@@ -96,7 +162,8 @@ void window_bordered::MoveTo(short x, short y){
 }
 
 
-window_chat::window_chat(short x, short y, short width, short height,short chatsize):window_bordered(x, y, width, height)
+window_chat::window_chat(short x, short y, short width, short height,short chatsize, myPair* focusedbox, myPair* regularbox):
+	window_bordered(x, y, width, height, focusedbox, regularbox)
 {
         this->chatsize = chatsize;
         mes = new std::string[chatsize];
@@ -122,7 +189,7 @@ void window_chat::Clear(){
 }
 
 void window_chat::Draw(){
-        box(win,0,0);
+	DrawBox();
 //      if(IsUpdated()){
         werase(subwin);
         for(short i=0; i<GetHeight()-2; i++){
@@ -194,8 +261,8 @@ void window_chat::ScrollDown(){
 }
 
 
-window_playerstats::window_playerstats(short x, short y, short width, short height):
-        window_bordered(x, y, width, height)
+window_playerstats::window_playerstats(short x, short y, short width, short height, myPair* focusedbox, myPair* regularbox):
+        window_bordered(x, y, width, height, focusedbox, regularbox)
 {
         itemhlght=0;
 }
@@ -258,12 +325,11 @@ void window_playerstats::FocusRight(){
 short window_playerstats::GetHighlight(){       return itemhlght;}
 
 
-attack_dialog::attack_dialog(short x, short y, short width, short height, std::vector<gameobjectmovable*> targets):
-        window_bordered(x,y,width,height), message("Choose target:")
+attack_dialog::attack_dialog(short x, short y, short width, short height, std::vector<gameobjectmovable*> targets, myPair* focusedbox, myPair* regularbox):
+        window_bordered(x,y,width,height, focusedbox, regularbox), message("Choose target:")
 {
 	itemscount = targets.size();
-//	items = new ITEM*[itemscount+1]();
-	items = (ITEM **)calloc(itemscount + 1, sizeof(ITEM *));
+	items = new ITEM*[itemscount+1]();
 	chars = new std::string[itemscount];
 	strings = new std::string[itemscount];
 	for(ushort i=0; i<itemscount; i++){
@@ -282,6 +348,7 @@ attack_dialog::attack_dialog(short x, short y, short width, short height, std::v
 	set_menu_mark(mymenu, "->");
 	set_menu_format(mymenu, 5,1);
 	updated = true;
+	focused = true;
 }
 
 attack_dialog::~attack_dialog(){
@@ -297,7 +364,7 @@ attack_dialog::~attack_dialog(){
 
 void attack_dialog::Draw(){
 	if(updated){
-                box(win,0,0);
+		DrawBox();
                 wnoutrefresh(win);
 		//wprintw(subwin, "%s", message.c_str());
 		post_menu(mymenu);

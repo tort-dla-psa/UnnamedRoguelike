@@ -13,30 +13,15 @@ void ShowTiletypes(std::vector<tile*> tiletypes){
 
 engine::engine(){
 	win = new interface();
-	if(has_colors()==false){
-		endwin();
-		exit(1);
-	}
-	srand(time(NULL));
+	//win->DrawPalette();
+	mp = nullptr;
+	pathfinder = nullptr;
 	InitKeys();
+	srand(time(NULL));
 	materials = FileOperations::LoadMaterials();
 	oreideas = FileOperations::LoadOres(materials);
-	tileideas = FileOperations::LoadTiles(oreideas);
-	ShowTiletypes(tileideas);
-	getch();
-	mp = new Perlin(100,100,128,tileideas);
-	pathfinder = new generator();
-	AddCreature("Adam",'T',10,1,0,1,0);
-	AddCreature("Eve",'i',10,1,1,1,0);
-	CreateItem('0',materials[0],1,0,0);
-	CreateItem('1',materials[1],2,0,0);
-	CreateItem('2',materials[2],2,0,0);
-	DoGravity();
-	tile* destignation = mp->FindTileOnVertical(25,12);
-
-	tile* start = (tile*)creatures[1]->GetPlace();
-	std::vector<tilewspace*> path = pathfinder->FindPath(mp,start,destignation); 
-	creatures[1]->SetPath(path);
+	tileideas = FileOperations::LoadTiles(oreideas, win->GetPalette());
+	//ShowTiletypes(tileideas);
 }
 
 engine::~engine(){
@@ -67,19 +52,19 @@ engine::~engine(){
 
 void engine::DrawRecurse(ushort x, ushort y, ushort z, ushort iter, ushort max){
 	tile* temp = mp->GetTile(x+win->GetCamOffsetX(),y+win->GetCamOffsetY(),z);
-	if(iter>=max||!temp){
-		win->DrawOnMap(x,y,'.',1+iter);
+	if(iter==max){
+		win->DrawOnMap(x,y,'.',iter);
 		return;
 	}
 	if(temp->IsSpace()){
 		tilewspace* temp2 = (tilewspace*) temp;
 		if(temp2->HasObjects()){
-			win->DrawOnMap(x,y,temp->GetImg(),1+iter);
+			win->DrawOnMap(x,y,temp->GetImg(),iter);
 			return;
 		}
 		DrawRecurse(x,y,z+1,iter+1,max);
 	}else{
-		win->DrawOnMap(x,y,temp->GetImg(),1+iter);
+		win->DrawOnMap(x,y,temp->GetImg(),temp->GetColor(),iter);
 	}
 }
 void engine::DrawMap(){
@@ -94,7 +79,7 @@ void engine::DrawMap(){
 	for(short i=0; i<winx; i++){
 		for(short j=0; j<winy; j++){
 			if(j+Y<0||i+X<0||j+Y>=mapY||i+X>=mapX){
-				win->DrawOnMap(i,j,' ', 1);
+				win->DrawOnMap(i,j,' ');
 				continue;
 			}
 			DrawRecurse(i,j,camZ,0,4);
@@ -155,7 +140,7 @@ creature* engine::AddCreature(std::string name, char img, ushort hp, ushort dp, 
 	}
 	return nullptr;
 }
-void engine::MovePlayer(const int keycode){
+void engine::MovePlayer(iConstInt keycode){
 	short* dirs = GetDir(keycode);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
@@ -171,7 +156,7 @@ void engine::MovePlayer(const int keycode){
 	}
 	delete[] dirs;
 }
-void engine::MoveCam(const int keycode){
+void engine::MoveCam(iConstInt keycode){
 	short* dirs = GetDir(keycode);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
@@ -180,7 +165,7 @@ void engine::MoveCam(const int keycode){
 	win->CamFollow(temptile);
 	delete[] dirs;
 }
-void engine::PerformAttack(const int keycode){
+void engine::PerformAttack(iConstInt keycode){
 	short* dirs = GetDir(keycode);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
@@ -238,7 +223,7 @@ item* engine::CreateItem(char img, material* materia,  ushort x, ushort y, ushor
 	return NULL;
 }
 
-void engine::PickUp(const int keycode){
+void engine::PickUp(iConstInt keycode){
 	short* dirs = GetDir(keycode);
 	short x = dirs[0], y = dirs[1], z = dirs[2];
 	tile* temptile = mp->GetTile(x,y,z);
@@ -293,7 +278,7 @@ void engine::InitKeys(){
 }
 
 void engine::HandleKey(char ch){
-	const int keycode = win->HandleKey(ch);
+	iConstInt keycode = win->HandleKey(ch);
 	if(keycode==win->iKEYCODE_PLAYER_MOVE_UP||
 			keycode==win->iKEYCODE_PLAYER_MOVE_DOWN||
 			keycode==win->iKEYCODE_PLAYER_MOVE_LEFT||
@@ -320,6 +305,29 @@ void engine::HandleKey(char ch){
 }
 
 void engine::MainLoop(){
+	{
+		iConstInt code;
+		code = win->ShowMainMenu();
+		if(code==win->iKEYCODE_MAINMENU_QUIT){
+			return;
+		}else if(code==win->iKEYCODE_MAINMENU_NEWGAME){
+		}
+	}
+	
+	mp = new Perlin(100,100,128,tileideas);
+	pathfinder = new generator();
+	AddCreature("Adam",'T',10,1,0,1,0);
+	AddCreature("Eve",'i',10,1,1,1,0);
+	CreateItem('0',materials[0],1,0,0);
+	CreateItem('1',materials[1],2,0,0);
+	CreateItem('2',materials[2],2,0,0);
+	DoGravity();
+	tile* destignation = mp->FindTileOnVertical(25,12);
+
+	tile* start = (tile*)creatures[1]->GetPlace();
+	std::vector<tilewspace*> path = pathfinder->FindPath(mp,start,destignation); 
+	creatures[1]->SetPath(path);
+
 	while(player!=NULL){
 		win->CheckResize();
 		win->SetCamParameters(win->GetWidth(),win->GetHeight());
@@ -334,7 +342,7 @@ void engine::MainLoop(){
 	}
 }
 
-short* engine::GetDir(const int keycode){
+short* engine::GetDir(iConstInt keycode){
 	short x = win->GetCamX();
 	short y = win->GetCamY();
 	short z = win->GetCamZ();

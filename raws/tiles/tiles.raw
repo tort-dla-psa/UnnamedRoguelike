@@ -10,6 +10,7 @@ img:@
 name:borderstone
 dropchance:0
 dropproduct:borderstone placeholder
+colors:1000,1000,1000:0,0,0
 ]
 
 [
@@ -17,6 +18,7 @@ img:_
 name:dirt
 dropchance:0.10
 dropproduct:dirt pile
+colors:0,0,0:400,360,330
 depthtype:cover
 ]
 
@@ -25,6 +27,7 @@ img:s
 name:sandstone
 dropchance:0.15
 dropproduct:sandstone pebbles
+colors:0,0,0:843,600,129
 depthtype:surface
 ]
 
@@ -33,6 +36,7 @@ img:f
 name:flint
 dropchance:0.15
 dropproduct:flint pebbles
+colors:0,0,0:659,600,518
 depthtype:surface
 ]
 
@@ -41,6 +45,7 @@ img:o
 name:granite
 dropchance:0.15
 dropproduct:granite boulder
+colors:0,0,0:659,600,518
 depthtype:middle
 ]
 
@@ -49,6 +54,7 @@ img:r
 name:diorite
 dropchance:0.15
 dropproduct:diorite boulder
+colors:0,0,0:659,600,518
 depthtype:middle
 ]
 
@@ -57,6 +63,7 @@ img:m
 name:marble
 dropchance:0.15
 dropproduct:marble boulder
+colors:0,0,0:694,384,525
 depthtype:deep
 ]
 
@@ -65,5 +72,6 @@ img:q
 name:quartzite
 dropchance:0.15
 dropproduct:quartzite boulder
+colors:0,0,0:659,600,518
 depthtype:deep
 ]
