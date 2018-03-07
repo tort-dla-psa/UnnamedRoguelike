@@ -9,10 +9,21 @@ map::map(ushort width, ushort height, ushort depth):
 	width(width),height(height),depth(depth)
 {
 	tiles = new tile***[depth];
+	revealed = new bool**[depth]();
+	visible = new bool**[depth]();
 	for(ushort z=0; z<depth; z++){
 		tiles[z] = new tile**[width];
+		revealed[z] = new bool*[width]();
+		visible[z] = new bool*[width]();
 		for(ushort x=0; x<width; x++){
 			tiles[z][x] = new tile*[height];
+			revealed[z][x] = new bool[height]();
+			visible[z][x] = new bool[height]();
+			for(ushort y=0; y<height; y++){
+				tiles[z][x][y] = nullptr;
+				revealed[z][x][y] = false;
+				visible[z][x][y] = false;
+			}
 		}
 	}
 }
@@ -21,46 +32,43 @@ map::~map(){
 	for(ushort i=0; i<depth; i++){
 		for(ushort x=0; x<width; x++){
 			for(ushort y=0; y<height ;y++){
-				if(tiles[i][x][y])
-					delete tiles[i][x][y];
+				delete tiles[i][x][y];
 			}
+			delete[] revealed[i][x];
+			delete[] visible[i][x];
 			delete[] tiles[i][x];
 		}
+		delete[] revealed[i];
+		delete[] visible[i];
 		delete[] tiles[i];
 	}
+	delete[] revealed;
+	delete[] visible;
 	delete[] tiles;
-
-	for(auto t:coverstone){
-		delete t;
-	}
-	coverstone.clear();
-	for(auto t:surfstone){
-		delete t;
-	}
-	surfstone.clear();
-	for(auto t:midstone){
-		delete t;
-	}
-	midstone.clear();
-	for(auto t:deepstone){
-		delete t;
-	}
-	deepstone.clear();
-
-	delete air;
-	delete borderstone;
 }
 
+void map::SetTile(ushort x, ushort y, ushort z, tile* target){
+	tiles[z][x][y] = target;
+}
 tile* map::GetTile(ushort x, ushort y, ushort z){
 	if(	z<0 || z>=depth || 
 		x<0 || x>=width ||
 		y<0 || y>=height)
 		return nullptr;
-	if(tiles[z][x][y]->IsSpace())
-		return (tilewspace*) tiles[z][x][y];
 	return tiles[z][x][y];
 }
-
+bool map::GetRevealed(tile* place){
+	return revealed[place->GetZ()][place->GetX()][place->GetY()];
+}
+bool map::GetVisible(tile* place){
+	return visible[place->GetZ()][place->GetX()][place->GetY()];
+}
+void map::SetRevealed(ushort x, ushort y, ushort z, bool key){
+	revealed[z][x][y] = key;
+}
+void map::SetVisible(ushort x, ushort y, ushort z, bool key){
+	visible[z][x][y] = key;
+}
 void map::DelTile(tile* target){
 	ushort x = target->GetX();
 	ushort y = target->GetY();
@@ -101,6 +109,134 @@ tile* map::FindTileOnVertical(ushort x, ushort y){
 ushort map::GetWidth(){		return width;}
 ushort map::GetHeight(){	return height;}
 ushort map::GetDepth(){		return depth;}
+
+tile* map::CastRay(tile* start, tile* end){
+	short x0 = start->GetX();
+	short y0 = start->GetY();
+	short z0 = start->GetZ();
+	short x1 = end->GetX();
+	short y1 = end->GetY();
+	short z1 = end->GetZ();
+
+	short dx = abs(x0-x1),
+		sx = x0<x1?1:x0==x1?0:-1;
+	short dy = abs(y0-y1),
+		sy = y0<y1?1:y0==y1?0:-1;
+	short dz = abs(z0-z1),
+		sz = z0<z1?1:z0==z1?0:-1;
+
+	short dx2 = dx<<1;
+	short dy2 = dy<<1;
+	short dz2 = dz<<1;
+
+	short err1, err2;
+	short d = std::max(std::max(dx,dy),dz);
+
+	tile* temptile = start;
+	bool visible = true;
+	if(dx==d){
+		err1 = dy2 - dx;
+		err2 = dz2 - dx;
+		for(int i=0; i<dx; i++){
+			temptile = GetTile(x0,y0,z0);
+			if(!temptile->IsSpace()){
+				visible = false;
+				break;
+			}
+			if(err1>0){
+				y0+=sy;
+				err1-=dx2;
+			}
+			if(err2>0){
+				z0+=sz;
+				err2-=dx2;
+			}
+			err1+=dy2;
+			err2+=dz2;
+			x0+=sx;
+		}
+	}else if(dy==d){
+		err1 = dx2 - dy;
+		err2 = dz2 - dy;
+		for(int i=0; i<dy; i++){
+			temptile = GetTile(x0,y0,z0);
+			if(!temptile->IsSpace()){
+				visible = false;
+				break;
+			}
+			if(err1>0){
+				x0+=sx;
+				err1-=dy2;
+			}
+			if(err2>0){
+				z0+=sz;
+				err2-=dy2;
+			}
+			err1+=dx2;
+			err2+=dz2;
+			y0+=sy;
+		}
+	}else{
+		err1 = dy2 - dz;
+		err2 = dx2 - dz;
+		for(int i=0; i<dz; i++){
+			temptile = GetTile(x0,y0,z0);
+			if(!temptile->IsSpace()){
+				visible = false;
+				break;
+			}
+			if(err1>0){
+				y0+=sy;
+				err1-=dz2;
+			}
+			if(err2>0){
+				x0+=sx;
+				err2-=dz2;
+			}
+			err1+=dy2;
+			err2+=dx2;
+			z0+=sz;
+		}
+	}
+	if(visible){
+		temptile=end;
+	}
+	return temptile;
+}
+
+map* map::GetSphere(tile* center, ushort radius){
+	ushort cx = center->GetX();
+	ushort cy = center->GetY();
+	ushort cz = center->GetZ();
+	ushort x_positive_dist = (cx+radius>=width)? width-1: cx+radius,
+	       x_negative_dist = (cx-radius<0)? 0: cx-radius, 
+	       y_positive_dist = (cy+radius>=height)? height-1: cy+radius,
+	       y_negative_dist = (cy-radius<0)? 0: cy-radius,
+	       z_positive_dist = (cz+5>=depth)? depth-1: cz+5,
+	       z_negative_dist = (cz-5<0)? 0: cz-5;
+	tile* t;
+	map* sphere = new map(abs(x_positive_dist-x_negative_dist),
+				abs(y_positive_dist-y_negative_dist),
+				abs(z_positive_dist-z_negative_dist));
+	for(int i=x_negative_dist; i<x_positive_dist; i++){
+		for(int j=y_negative_dist; j<y_positive_dist; j++){
+			for(int k=z_negative_dist; k<z_positive_dist; k++){
+				short dx = i-cx;
+				short dy = j-cy;
+				short dz = k-cz;
+				short distxy = sqrt(dx*dx+dy*dy);
+				short dist = sqrt(distxy*distxy+dz*dz);
+				if(dist>radius)	continue;
+				t = CastRay(center,tiles[k][i][j]);
+				sphere->SetTile(t->GetX()-x_negative_dist,
+						t->GetY()-y_negative_dist,
+						t->GetZ()-z_negative_dist,
+						t);
+			}
+		}
+	}
+	return sphere;
+}
 
 tile* Perlin::FindTile(std::string name, std::vector<tile*>tiletypes){
 	for(auto element:tiletypes){
@@ -235,4 +371,28 @@ Perlin::Perlin(ushort w, ushort h, ushort d, std::vector<tile*> tiletypes):map(w
 	}
 }
 
-Perlin::~Perlin(){}
+Perlin::~Perlin(){
+	/*
+	for(auto t:coverstone){
+		if(t)
+		delete t;
+		t=nullptr;
+	}
+	coverstone.clear();
+	for(auto t:surfstone){
+		delete t;
+		t=nullptr;
+	}
+	surfstone.clear();
+	for(auto t:midstone){
+		delete t;
+		t=nullptr;
+	}
+	midstone.clear();
+	for(auto t:deepstone){
+		delete t;
+		t=nullptr;
+	}
+	deepstone.clear();
+	*/
+}
