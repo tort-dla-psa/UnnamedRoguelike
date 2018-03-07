@@ -8,7 +8,7 @@ creature::creature(std::string name, char img, ushort hp, ushort dp):
 {
 	inhand = NULL;
 	inventorysize=10;
-	sightsize=10;
+	sightsize=20;
 	inventory = new gameobjectmovable*[inventorysize];
 	for(ushort i=0; i<inventorysize; i++)
 		inventory[i]=NULL;
