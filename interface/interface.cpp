@@ -8,6 +8,7 @@
 #include"camera.h"
 #include"../gameobject.h"
 #include"../creature.h"
+#include"../map.h"
 #include"MyPalette.h"
 
 keytie::keytie(char key, iConstInt returncode):
@@ -275,6 +276,60 @@ void interface::Draw(){
 void interface::ClearMap(){
 	mainscr->Clear();
 }
+
+void interface::DrawMap(map* tilemap){
+	short camZ = GetCamZ();
+	short size = player->GetSightSize();
+	short mapX = GetWidth();
+	short mapY = GetHeight();
+	short X = GetCamOffsetX();
+	short Y = GetCamOffsetY();
+	short winx = GetWidth();
+	short winy = GetHeight();
+	
+	for(short i=0; i<winx; i++){
+		for(short j=0; j<winy; j++){
+			if(j+Y<0||i+X<0||j+Y>=mapY||i+X>=mapX){
+			//if(j<0||i<0||j>=mapY||i>=mapX){
+				DrawOnMap(i,j,' ');
+				continue;
+			}
+			bool key=true;
+			short iter=0;
+			short max=4;
+			while(key){
+				tile* place = tilemap->GetTile(i+X,j+Y,camZ+iter);
+				if(iter==max || !place){
+					DrawOnMap(i,j,'.');
+					key=false;
+					continue;
+				}
+				if(place->IsSpace()){
+					if(tilemap->GetVisible(place)){
+						tilewspace* temp = (tilewspace*) place;
+						if(temp->HasObjects()){
+							DrawOnMap(i,j,temp->GetImg());
+							key=false;
+							continue;
+						}
+					}
+					iter++;
+				}else{
+					if(tilemap->GetVisible(place)){
+						DrawOnMap(i,j,place->GetImg(),place->GetColor(),iter);
+					}else if(tilemap->GetRevealed(place)){
+						DrawOnMap(i,j,place->GetImg(),iter);
+					}else{
+						DrawOnMap(i,j,'.');
+					}
+					key=false;
+					continue;
+				}
+			}
+		}
+		addch('\n');
+	}
+}
 void interface::DrawOnMap(short x, short y,char ch){
 	mainscr->Draw(x,y,ch,palette->GetPair(1,4));
 }
@@ -367,6 +422,7 @@ void interface::ProcessWindowOnResize(window_bordered* win, short deltax, short 
 short interface::GetCamX(){	return cam->GetX();}
 short interface::GetCamY(){	return cam->GetY();}
 short interface::GetCamZ(){	return cam->GetZ();}
+gameobjectstatic* interface::GetCamPlace(){	return cam->GetPlace();}
 short interface::GetCamOffsetX(){	return cam->GetOffsetX();}
 short interface::GetCamOffsetY(){	return cam->GetOffsetY();}
 void interface::CamFollow(gameobjectmovable* target){	cam->Follow(target);}

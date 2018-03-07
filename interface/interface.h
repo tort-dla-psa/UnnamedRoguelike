@@ -17,6 +17,7 @@ class creature;
 class gameobjectmovable;
 class gameobjectstatic;
 class camera;
+class map;
 
 class keytie{
 	char key;
@@ -106,6 +107,7 @@ public:
 	void CheckResize();
 	void Draw();
 	void ClearMap();
+	void DrawMap(map* tilemap);
 	void DrawOnMap(short x,short y,char ch);
 	void DrawOnMap(short x,short y,char ch, short delta);
 	void DrawOnMap(short x,short y,char ch, myPair* color);
@@ -135,6 +137,7 @@ public:
 	short GetCamX();
 	short GetCamY();
 	short GetCamZ();
+	gameobjectstatic* GetCamPlace();
 	short GetCamOffsetX();
 	short GetCamOffsetY();
 	void CamFollow(gameobjectmovable* target);
