@@ -25,70 +25,34 @@ engine::engine(){
 }
 
 engine::~engine(){
-	delete mp;
-	delete win;
-	delete pathfinder;
 	for(auto c:creatures){
 		delete c;
+		c=nullptr;
 	}
 	creatures.clear();
 	for(auto i:items){
 		delete i;
+		i=nullptr;
 	}
 	items.clear();
 	for(auto m:materials){
 		delete m;
+		m=nullptr;
 	}
 	materials.clear();
 	for(auto o:oreideas){
 		delete o;
+		o=nullptr;
 	}
 	oreideas.clear();
 	for(auto t:tileideas){
 		delete t;
+		t=nullptr;
 	}
 	tileideas.clear();
-}
-
-void engine::DrawRecurse(ushort x, ushort y, ushort z, ushort iter, ushort max){
-	tile* temp = mp->GetTile(x+win->GetCamOffsetX(),y+win->GetCamOffsetY(),z);
-	if(iter==max){
-		win->DrawOnMap(x,y,'.',iter);
-		return;
-	}
-	if(temp->IsSpace()){
-		tilewspace* temp2 = (tilewspace*) temp;
-		if(temp2->HasObjects()){
-			win->DrawOnMap(x,y,temp->GetImg(),iter);
-			return;
-		}
-		DrawRecurse(x,y,z+1,iter+1,max);
-	}else{
-		win->DrawOnMap(x,y,temp->GetImg(),temp->GetColor(),iter);
-	}
-}
-void engine::DrawMap(){
-	short camZ = win->GetCamZ();
-	short size = player->GetSightSize();
-	short mapX = mp->GetWidth();
-	short mapY = mp->GetHeight();
-	short X = win->GetCamOffsetX();
-	short Y = win->GetCamOffsetY();
-	short winx = win->GetWidth();
-	short winy = win->GetHeight();
-	for(short i=0; i<winx; i++){
-		for(short j=0; j<winy; j++){
-			if(j+Y<0||i+X<0||j+Y>=mapY||i+X>=mapX){
-				win->DrawOnMap(i,j,' ');
-				continue;
-			}
-			DrawRecurse(i,j,camZ,0,4);
-		}
-		addch('\n');
-	}
-	for(auto it:items){
-		it->GetName();
-	}
+	delete mp;
+	delete win;
+	delete pathfinder;
 }
 
 void engine::DoGravity(){
@@ -327,14 +291,74 @@ void engine::MainLoop(){
 	tile* start = (tile*)creatures[1]->GetPlace();
 	std::vector<tilewspace*> path = pathfinder->FindPath(mp,start,destignation); 
 	creatures[1]->SetPath(path);
+	map* mptemp = mp->GetSphere((tile*)win->GetCamPlace(),player->GetSightSize());
+	short w = mptemp->GetWidth();
+	short h = mptemp->GetHeight();
+	short d = mptemp->GetDepth();
+	for(short i=0; i<w; i++){
+		for(short j=0;j<h;j++){
+			for(short k=0;k<d;k++){
+				tile* temp = mptemp->GetTile(i,j,k);
+				if(!temp){
+					continue;
+				}
+				mp->SetRevealed(temp->GetX(),
+						temp->GetY(),
+						temp->GetZ(),true);
+				mp->SetVisible(temp->GetX(),
+						temp->GetY(),
+						temp->GetZ(),true);
+			}
+		}
+	}
 
 	while(player!=NULL){
 		win->CheckResize();
 		win->SetCamParameters(win->GetWidth(),win->GetHeight());
-		DrawMap();
+		//map* mp2 = mp->GetSphere((tile*)(win->GetCamPlace(), player->GetSightSize());
+		//player->SetSeen(mp);
+		//win->DrawMap(player->GetSeen()));
+		win->DrawMap(mp);
 		win->Draw();
 		char ch = getch();
 		HandleKey(ch);
+		map* mptemp2 = mp->GetSphere(player->GetPlace(), player->GetSightSize());
+	w = mptemp->GetWidth();
+	h = mptemp->GetHeight();
+	d = mptemp->GetDepth();
+	for(short i=0; i<w; i++){
+		for(short j=0;j<h;j++){
+			for(short k=0;k<d;k++){
+				tile* temp = mptemp->GetTile(i,j,k);
+				if(!temp){
+					continue;
+				}
+				mp->SetVisible(temp->GetX(),
+						temp->GetY(),
+						temp->GetZ(),false);
+			}
+		}
+	}
+	w = mptemp2->GetWidth();
+	h = mptemp2->GetHeight();
+	d = mptemp2->GetDepth();
+	for(short i=0; i<w; i++){
+		for(short j=0;j<h;j++){
+			for(short k=0;k<d;k++){
+				tile* temp = mptemp2->GetTile(i,j,k);
+				if(!temp){
+					continue;
+				}
+				mp->SetRevealed(temp->GetX(),
+						temp->GetY(),
+						temp->GetZ(),true);
+				mp->SetVisible(temp->GetX(),
+						temp->GetY(),
+						temp->GetZ(),true);
+			}
+		}
+	}
+	mptemp = mptemp2;
 		creatures[1]->FollowPath();
 		if(ch=='0')
 			break;
