@@ -291,7 +291,8 @@ void engine::MainLoop(){
 	tile* start = (tile*)creatures[1]->GetPlace();
 	std::vector<tilewspace*> path = pathfinder->FindPath(mp,start,destignation); 
 	creatures[1]->SetPath(path);
-	map* mptemp = mp->GetSphere((tile*)win->GetCamPlace(),player->GetSightSize());
+	sightsphere* mptemp = mp->GetSphere((tile*)win->GetCamPlace(),player->GetSightSize());
+	sightsphere* mptemp2;
 	short w = mptemp->GetWidth();
 	short h = mptemp->GetHeight();
 	short d = mptemp->GetDepth();
@@ -322,7 +323,7 @@ void engine::MainLoop(){
 		win->Draw();
 		char ch = getch();
 		HandleKey(ch);
-		map* mptemp2 = mp->GetSphere(player->GetPlace(), player->GetSightSize());
+		sightsphere* mptemp2 = mp->GetSphere(player->GetPlace(), player->GetSightSize());
 	w = mptemp->GetWidth();
 	h = mptemp->GetHeight();
 	d = mptemp->GetDepth();
@@ -358,12 +359,14 @@ void engine::MainLoop(){
 			}
 		}
 	}
+	delete mptemp;
 	mptemp = mptemp2;
 		creatures[1]->FollowPath();
 		if(ch=='0')
 			break;
 		DoGravity();
 	}
+	delete mptemp,mptemp2;
 }
 
 short* engine::GetDir(iConstInt keycode){

@@ -204,7 +204,7 @@ tile* map::CastRay(tile* start, tile* end){
 	return temptile;
 }
 
-map* map::GetSphere(tile* center, ushort radius){
+sightsphere* map::GetSphere(tile* center, ushort radius){
 	ushort cx = center->GetX();
 	ushort cy = center->GetY();
 	ushort cz = center->GetZ();
@@ -215,7 +215,7 @@ map* map::GetSphere(tile* center, ushort radius){
 	       z_positive_dist = (cz+5>=depth)? depth-1: cz+5,
 	       z_negative_dist = (cz-5<0)? 0: cz-5;
 	tile* t;
-	map* sphere = new map(abs(x_positive_dist-x_negative_dist),
+	sightsphere* sphere = new sightsphere(abs(x_positive_dist-x_negative_dist),
 				abs(y_positive_dist-y_negative_dist),
 				abs(z_positive_dist-z_negative_dist));
 	for(int i=x_negative_dist; i<x_positive_dist; i++){
@@ -237,6 +237,76 @@ map* map::GetSphere(tile* center, ushort radius){
 	}
 	return sphere;
 }
+
+sightsphere::sightsphere(ushort width, ushort height, ushort depth):
+	width(width),height(height),depth(depth)
+{
+	tiles = new tile***[depth];
+	revealed = new bool**[depth]();
+	visible = new bool**[depth]();
+	for(ushort z=0; z<depth; z++){
+		tiles[z] = new tile**[width];
+		revealed[z] = new bool*[width]();
+		visible[z] = new bool*[width]();
+		for(ushort x=0; x<width; x++){
+			tiles[z][x] = new tile*[height];
+			revealed[z][x] = new bool[height]();
+			visible[z][x] = new bool[height]();
+			for(ushort y=0; y<height; y++){
+				tiles[z][x][y] = nullptr;
+				revealed[z][x][y] = false;
+				visible[z][x][y] = false;
+			}
+		}
+	}
+}
+
+sightsphere::~sightsphere(){
+	for(ushort i=0; i<depth; i++){
+		for(ushort x=0; x<width; x++){
+			for(ushort y=0; y<height ;y++){
+				tiles[i][x][y]=nullptr;
+				delete tiles[i][x][y];
+			}
+			delete[] revealed[i][x];
+			delete[] visible[i][x];
+			delete[] tiles[i][x];
+		}
+		delete[] revealed[i];
+		delete[] visible[i];
+		delete[] tiles[i];
+	}
+	delete[] revealed;
+	delete[] visible;
+	delete[] tiles;
+}
+
+void sightsphere::SetTile(ushort x, ushort y, ushort z, tile* target){
+	tiles[z][x][y] = target;
+}
+tile* sightsphere::GetTile(ushort x, ushort y, ushort z){
+	if(	z<0 || z>=depth || 
+		x<0 || x>=width ||
+		y<0 || y>=height)
+		return nullptr;
+	return tiles[z][x][y];
+}
+bool sightsphere::GetRevealed(tile* place){
+	return revealed[place->GetZ()][place->GetX()][place->GetY()];
+}
+bool sightsphere::GetVisible(tile* place){
+	return visible[place->GetZ()][place->GetX()][place->GetY()];
+}
+void sightsphere::SetRevealed(ushort x, ushort y, ushort z, bool key){
+	revealed[z][x][y] = key;
+}
+void sightsphere::SetVisible(ushort x, ushort y, ushort z, bool key){
+	visible[z][x][y] = key;
+}
+
+ushort sightsphere::GetWidth(){		return width;}
+ushort sightsphere::GetHeight(){	return height;}
+ushort sightsphere::GetDepth(){		return depth;}
 
 tile* Perlin::FindTile(std::string name, std::vector<tile*>tiletypes){
 	for(auto element:tiletypes){

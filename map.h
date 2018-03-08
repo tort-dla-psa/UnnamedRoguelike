@@ -4,6 +4,7 @@
 #include<string>
 #include"gameobject.h"
 #include"tile.h"
+class sightsphere;
 class map{
 	ushort width,height,depth;
 protected:
@@ -31,7 +32,29 @@ public:
 	ushort GetHeight();
 	ushort GetDepth();
 	//std::vector<tile*> GetSphere(tile* center, ushort radius);
-	map* GetSphere(tile* center, ushort radius);
+	sightsphere* GetSphere(tile* center, ushort radius);
+};
+
+class sightsphere{
+	ushort width,height,depth;
+protected:
+	tile**** tiles;
+	bool*** revealed;
+	bool*** visible;
+public:
+	sightsphere(ushort width, ushort height, ushort depth);
+	~sightsphere();
+	void SetTile(ushort x, ushort y, ushort z, tile* target);
+	tile* GetTile(ushort x, ushort y, ushort z);
+
+	bool GetRevealed(tile* place);
+	bool GetVisible(tile* place);
+	void SetRevealed(ushort x, ushort y, ushort z, bool key);
+	void SetVisible(ushort x, ushort y, ushort z, bool key);
+	
+	ushort GetWidth();
+	ushort GetHeight();
+	ushort GetDepth();
 };
 
 class Perlin: public map{
