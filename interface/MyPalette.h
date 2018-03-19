@@ -10,6 +10,7 @@ class mypalette{
 	myColor* black;
 	std::vector<myPair*> pairstorage;
 	std::vector<myColor*> colorstorage;
+	myPair** whites;
 	short maxcolors;
 	short maxpairs;
 	short colorscount;
@@ -25,6 +26,7 @@ public:
 	myPair* AddPair(myColor* c1, myColor* c2);
 	myPair* AddToTable(myColor* c1, myColor* c2);
 	myPair* GetDarker(myPair* target, short delta);
+	myPair* GetWhite(short delta);
 	short GetColorsCount();
 	short GetPairsCount();
 };

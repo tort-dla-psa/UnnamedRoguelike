@@ -11,14 +11,6 @@
 #include"../map.h"
 #include"MyPalette.h"
 
-keytie::keytie(char key, iConstInt returncode):
-	key(key),returncode(returncode){}
-keytie::~keytie(){}
-void keytie::SetKey(char key){	this->key = key;}
-void keytie::SetCode(iConstInt code){	this->returncode = code;}
-char keytie::GetChar(){	return key;}
-iConstInt keytie::GetCode(){	return returncode;}
-
 interface::~interface(){
 	delete playerstat,
 	       chat,
@@ -26,10 +18,6 @@ interface::~interface(){
 	delete cam;
 	delete palette;
 	wins.clear();
-	for(auto k:keys){
-		delete k;
-	}
-	keys.clear();
 	clear();
 	endwin();
 }
@@ -64,6 +52,15 @@ void interface::OpenGameInterface(){
 }
 int interface::GetNextKey(){		return ++pastkey;}
 int interface::GetNextKeycode(){	return --pastkeycode;}
+iConstInt interface::GetKeycode(char ch){
+	iConstInt code;
+	try{
+		code = keyties.at(ch);
+	}catch(const std::out_of_range &e){
+		return iKEYCODE_NOTHING;
+	}
+	return code.GetCode();
+}
 void interface::InitKeys(){
 	iKEY_UP=	iConstInt(GetNextKey());
 	iKEY_DOWN=	iConstInt(GetNextKey());
@@ -71,6 +68,10 @@ void interface::InitKeys(){
 	iKEY_RIGHT=	iConstInt(GetNextKey());
 	iKEY_UPZ=	iConstInt(GetNextKey());
 	iKEY_DOWNZ=	iConstInt(GetNextKey());
+	iKEY_UPLEFT=	iConstInt(GetNextKey());
+	iKEY_UPRIGHT=	iConstInt(GetNextKey());
+	iKEY_DOWNLEFT=	iConstInt(GetNextKey());
+	iKEY_DOWNRIGHT=	iConstInt(GetNextKey());
 	iKEY_ATTACK_UP=	iConstInt(GetNextKey());
 	iKEY_ATTACK_DOWN=	iConstInt(GetNextKey());
 	iKEY_ATTACK_LEFT=	iConstInt(GetNextKey());
@@ -86,16 +87,27 @@ void interface::InitKeys(){
 	iKEY_PGDOWN=	iConstInt(GetNextKey());
 }
 void interface::InitKeycodes(){
+	iKEYCODE_NOTHING=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_MOVE_UP=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_MOVE_DOWN=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_MOVE_LEFT=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_MOVE_RIGHT=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_MOVE_UPZ=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_MOVE_DOWNZ=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_MOVE_UPLEFT=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_MOVE_UPRIGHT=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_MOVE_DOWNLEFT=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_MOVE_DOWNRIGHT=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_ATTACK_UP=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_ATTACK_DOWN=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_ATTACK_LEFT=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_ATTACK_RIGHT=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_ATTACK_UPZ=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_ATTACK_DOWNZ=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_ATTACK_UPLEFT=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_ATTACK_UPRIGHT=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_ATTACK_DOWNLEFT=	iConstInt(GetNextKeycode());
+	iKEYCODE_PLAYER_ATTACK_DOWNRIGHT=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_PICK_UP=	iConstInt(GetNextKeycode());
 	iKEYCODE_PLAYER_DROP=	iConstInt(GetNextKeycode());
 	iKEYCODE_CAM_MOVE_UP=	iConstInt(GetNextKeycode());
@@ -112,96 +124,111 @@ void interface::InitKeycodes(){
 	iKEYCODE_MAINMENU_QUIT=	iConstInt(GetNextKeycode());
 }
 void interface::AddKey(char key, iConstInt keycode){
-	keys.push_back(new keytie(key,keycode));
+	keyties[key] = keycode;
 }
 iConstInt interface::HandleKey(char key){
-	for(auto k:keys){
-		if(k->GetChar()==key){
-			iConstInt code = k->GetCode();
-			if(mainscr->IsFocused()){
-				if(!cam->Flying()){
-					if(code==iKEY_UP){
-						return iKEYCODE_PLAYER_MOVE_UP;
-					}else if(code==iKEY_DOWN){
-						return iKEYCODE_PLAYER_MOVE_DOWN;
-					}else if(code==iKEY_LEFT){
-						return iKEYCODE_PLAYER_MOVE_LEFT;
-					}else if(code==iKEY_RIGHT){
-						return iKEYCODE_PLAYER_MOVE_RIGHT;
-					}else if(code==iKEY_ATTACK_UP){
-						return iKEYCODE_PLAYER_ATTACK_UP;
-					}else if(code==iKEY_ATTACK_DOWN){
-						return iKEYCODE_PLAYER_ATTACK_DOWN;
-					}else if(code==iKEY_ATTACK_LEFT){
-						return iKEYCODE_PLAYER_ATTACK_LEFT;
-					}else if(code==iKEY_ATTACK_RIGHT){
-						return iKEYCODE_PLAYER_ATTACK_RIGHT;
-					}else if(code==iKEY_PICK_UP){
-						return iKEYCODE_PLAYER_PICK_UP;
-					}else if(code==iKEY_OPEN_INVENTORY){
-						SetFocus(playerstat);
-					}else if(code==iKEY_OPEN_CHAT){
-						SetFocus(chat);
-					}else if(code==iKEY_CAMERA_FLY){
-						cam->Follow((gameobjectstatic*)player->GetPlace());
-					}
-				}else{
-					if(code==iKEY_UP){
-						return iKEYCODE_CAM_MOVE_UP;
-					}else if(code==iKEY_DOWN){
-						return iKEYCODE_CAM_MOVE_DOWN;
-					}else if(code==iKEY_LEFT){
-						return iKEYCODE_CAM_MOVE_LEFT;
-					}else if(code==iKEY_RIGHT){
-						return iKEYCODE_CAM_MOVE_RIGHT;
-					}else if(code==iKEY_DOWNZ){
-						return iKEYCODE_CAM_MOVE_DOWNZ;
-					}else if(code==iKEY_UPZ){
-						return iKEYCODE_CAM_MOVE_UPZ;
-					}else if(code==iKEY_ESC){
-						cam->Follow(player);
-					}else if(code==iKEY_OPEN_INVENTORY){
-						SetFocus(playerstat);
-					}else if(code==iKEY_OPEN_CHAT){
-						SetFocus(chat);
-					}
-				}
-			}else if(attackdialog){
-				if(code==iKEY_UP){
-					AttackDialogUp();
-				}else if(code==iKEY_DOWN){
-					AttackDialogDown();
-				}else if(code==iKEY_ENTER){
-					player->Attack(GetAttackDialogTarget());
-				}else if(code==iKEY_ESC){
-					AttackDialogClose();
-				}
-			}else if(playerstat->IsFocused()){
-				if(code==iKEY_ESC){
-					SetFocus(mainscr);
-				}else if(code==iKEY_DROP){
-					player->Drop(GetHighlight());
-					short oldhlght = GetHighlight();
-					InventoryFocusRight();
-					if(oldhlght==GetHighlight())
-						InventoryFocusLeft();
-				}else if(code==iKEY_LEFT){
-					InventoryFocusLeft();
-				}else if(code==iKEY_RIGHT){
-					InventoryFocusRight();
-				}else if(code==iKEY_PICK_UP){
-					player->Take(GetHighlight());
-				}
-			}else if(chat->IsFocused()){
-				if(code==iKEY_PGUP){
-					ChatScrollUp();
-				}else if(code==iKEY_PGDOWN){
-					ChatScrollDown();
-				}else if(code==iKEY_ESC){
-					SetFocus(mainscr);
-				}
+	iConstInt code = GetKeycode(key);
+	if(mainscr->IsFocused()){
+		if(!cam->Flying()){
+			if(code==iKEY_UP){
+				return iKEYCODE_PLAYER_MOVE_UP;
+			}else if(code==iKEY_DOWN){
+				return iKEYCODE_PLAYER_MOVE_DOWN;
+			}else if(code==iKEY_LEFT){
+				return iKEYCODE_PLAYER_MOVE_LEFT;
+			}else if(code==iKEY_RIGHT){
+				return iKEYCODE_PLAYER_MOVE_RIGHT;
+			}else if(code==iKEY_UPLEFT){
+				return iKEYCODE_PLAYER_MOVE_UPLEFT;
+			}else if(code==iKEY_UPRIGHT){
+				return iKEYCODE_PLAYER_MOVE_UPRIGHT;
+			}else if(code==iKEY_DOWNLEFT){
+				return iKEYCODE_PLAYER_MOVE_DOWNLEFT;
+			}else if(code==iKEY_DOWNRIGHT){
+				return iKEYCODE_PLAYER_MOVE_DOWNRIGHT;
+			}else if(code==iKEY_ATTACK_UP){
+				return iKEYCODE_PLAYER_ATTACK_UP;
+			}else if(code==iKEY_ATTACK_DOWN){
+				return iKEYCODE_PLAYER_ATTACK_DOWN;
+			}else if(code==iKEY_ATTACK_LEFT){
+				return iKEYCODE_PLAYER_ATTACK_LEFT;
+			}else if(code==iKEY_ATTACK_RIGHT){
+				return iKEYCODE_PLAYER_ATTACK_RIGHT;
+			}else if(code==iKEY_ATTACK_UPZ){
+				return iKEYCODE_PLAYER_ATTACK_UPZ;
+			}else if(code==iKEY_ATTACK_DOWNZ){
+				return iKEYCODE_PLAYER_ATTACK_DOWNZ;
+			}else if(code==iKEY_ATTACK_UPLEFT){
+				return iKEYCODE_PLAYER_ATTACK_UPLEFT;
+			}else if(code==iKEY_ATTACK_UPRIGHT){
+				return iKEYCODE_PLAYER_ATTACK_UPRIGHT;
+			}else if(code==iKEY_ATTACK_DOWNLEFT){
+				return iKEYCODE_PLAYER_ATTACK_DOWNLEFT;
+			}else if(code==iKEY_ATTACK_DOWNRIGHT){
+				return iKEYCODE_PLAYER_ATTACK_DOWNRIGHT;
+			}else if(code==iKEY_PICK_UP){
+				return iKEYCODE_PLAYER_PICK_UP;
+			}else if(code==iKEY_OPEN_INVENTORY){
+				SetFocus(playerstat);
+			}else if(code==iKEY_OPEN_CHAT){
+				SetFocus(chat);
+			}else if(code==iKEY_CAMERA_FLY){
+				cam->Follow((gameobjectstatic*)player->GetPlace());
 			}
-			break;
+		}else{
+			if(code==iKEY_UP){
+				return iKEYCODE_CAM_MOVE_UP;
+			}else if(code==iKEY_DOWN){
+				return iKEYCODE_CAM_MOVE_DOWN;
+			}else if(code==iKEY_LEFT){
+				return iKEYCODE_CAM_MOVE_LEFT;
+			}else if(code==iKEY_RIGHT){
+				return iKEYCODE_CAM_MOVE_RIGHT;
+			}else if(code==iKEY_DOWNZ){
+				return iKEYCODE_CAM_MOVE_DOWNZ;
+			}else if(code==iKEY_UPZ){
+				return iKEYCODE_CAM_MOVE_UPZ;
+			}else if(code==iKEY_ESC){
+				cam->Follow(player);
+			}else if(code==iKEY_OPEN_INVENTORY){
+				SetFocus(playerstat);
+			}else if(code==iKEY_OPEN_CHAT){
+				SetFocus(chat);
+			}
+		}
+	}else if(attackdialog){
+		if(code==iKEY_UP){
+			AttackDialogUp();
+		}else if(code==iKEY_DOWN){
+			AttackDialogDown();
+		}else if(code==iKEY_ENTER){
+			player->Attack(GetAttackDialogTarget());
+		}else if(code==iKEY_ESC){
+			AttackDialogClose();
+		}
+	}else if(playerstat->IsFocused()){
+		if(code==iKEY_ESC){
+			SetFocus(mainscr);
+		}else if(code==iKEY_DROP){
+			player->Drop(GetHighlight());
+			short oldhlght = GetHighlight();
+			InventoryFocusRight();
+			if(oldhlght==GetHighlight())
+				InventoryFocusLeft();
+		}else if(code==iKEY_LEFT){
+			InventoryFocusLeft();
+		}else if(code==iKEY_RIGHT){
+			InventoryFocusRight();
+		}else if(code==iKEY_PICK_UP){
+			player->Take(GetHighlight());
+		}
+	}else if(chat->IsFocused()){
+		if(code==iKEY_PGUP){
+			ChatScrollUp();
+		}else if(code==iKEY_PGDOWN){
+			ChatScrollDown();
+		}else if(code==iKEY_ESC){
+			SetFocus(mainscr);
 		}
 	}
 }
@@ -226,18 +253,13 @@ iConstInt interface::ShowMainMenu(){
 		menu->Draw();
 		doupdate();
 		char c = getch();
-		for(auto k:keys){
-			if(k->GetChar()==c){
-				iConstInt code = k->GetCode();
-
-				if(code==iKEY_UP){
-					menu->FocusUp();
-				}else if(code==iKEY_DOWN){
-					menu->FocusDown();
-				}else if(code==iKEY_ENTER){
-					key = menu->GetFocused()->code;
-				}
-			}
+		iConstInt code = GetKeycode(c);
+		if(code==iKEY_UP){
+			menu->FocusUp();
+		}else if(code==iKEY_DOWN){
+			menu->FocusDown();
+		}else if(code==iKEY_ENTER){
+			key = menu->GetFocused()->code;
 		}
 	}
 	if(!(key==iKEYCODE_MAINMENU_QUIT)){
@@ -280,8 +302,8 @@ void interface::ClearMap(){
 void interface::DrawMap(map* tilemap){
 	short camZ = GetCamZ();
 	short size = player->GetSightSize();
-	short mapX = GetWidth();
-	short mapY = GetHeight();
+	short mapX = tilemap->GetWidth();
+	short mapY = tilemap->GetHeight();
 	short X = GetCamOffsetX();
 	short Y = GetCamOffsetY();
 	short winx = GetWidth();
@@ -290,7 +312,6 @@ void interface::DrawMap(map* tilemap){
 	for(short i=0; i<winx; i++){
 		for(short j=0; j<winy; j++){
 			if(j+Y<0||i+X<0||j+Y>=mapY||i+X>=mapX){
-			//if(j<0||i<0||j>=mapY||i>=mapX){
 				DrawOnMap(i,j,' ');
 				continue;
 			}
@@ -308,7 +329,7 @@ void interface::DrawMap(map* tilemap){
 					if(tilemap->GetVisible(place)){
 						tilewspace* temp = (tilewspace*) place;
 						if(temp->HasObjects()){
-							DrawOnMap(i,j,temp->GetImg());
+							DrawOnMap(i,j,temp->GetImg(),iter);
 							key=false;
 							continue;
 						}
@@ -334,7 +355,7 @@ void interface::DrawOnMap(short x, short y,char ch){
 	mainscr->Draw(x,y,ch,palette->GetPair(1,4));
 }
 void interface::DrawOnMap(short x, short y,char ch,short delta){
-	mainscr->Draw(x,y,ch,palette->GetDarker(palette->GetPair(1,0),delta));
+	mainscr->Draw(x,y,ch,palette->GetWhite(delta));
 }
 void interface::DrawOnMap(short x, short y,char ch, myPair* color){
 	mainscr->Draw(x,y,ch,color);

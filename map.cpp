@@ -5,91 +5,119 @@
 #include"FastNoise.h"
 #include"material.h"
 
-map::map(ushort width, ushort height, ushort depth):
+tilearray::tilearray(ushort width, ushort height, ushort depth):
 	width(width),height(height),depth(depth)
 {
-	tiles = new tile***[depth];
-	revealed = new bool**[depth]();
-	visible = new bool**[depth]();
-	for(ushort z=0; z<depth; z++){
-		tiles[z] = new tile**[width];
-		revealed[z] = new bool*[width]();
-		visible[z] = new bool*[width]();
-		for(ushort x=0; x<width; x++){
-			tiles[z][x] = new tile*[height];
-			revealed[z][x] = new bool[height]();
-			visible[z][x] = new bool[height]();
-			for(ushort y=0; y<height; y++){
-				tiles[z][x][y] = nullptr;
-				revealed[z][x][y] = false;
-				visible[z][x][y] = false;
-			}
-		}
+	size = width*height*depth;
+	tiles = new tile*[size];
+	for(unsigned int i=0;i<size;i++){
+		tiles[i] = nullptr;
 	}
 }
 
-map::~map(){
-	for(ushort i=0; i<depth; i++){
-		for(ushort x=0; x<width; x++){
-			for(ushort y=0; y<height ;y++){
-				delete tiles[i][x][y];
-			}
-			delete[] revealed[i][x];
-			delete[] visible[i][x];
-			delete[] tiles[i][x];
-		}
-		delete[] revealed[i];
-		delete[] visible[i];
-		delete[] tiles[i];
+tilearray::~tilearray(){
+	for(unsigned int i=0; i<size; i++){
+		delete tiles[i];
 	}
-	delete[] revealed;
-	delete[] visible;
 	delete[] tiles;
 }
-
-void map::SetTile(ushort x, ushort y, ushort z, tile* target){
-	tiles[z][x][y] = target;
+void tilearray::SetTile(ushort x, ushort y, ushort z, tile* target){
+	tiles[x+y*width+z*width*height] = target;
 }
-tile* map::GetTile(ushort x, ushort y, ushort z){
+tile* tilearray::GetTile(ushort x, ushort y, ushort z){
 	if(	z<0 || z>=depth || 
 		x<0 || x>=width ||
 		y<0 || y>=height)
 		return nullptr;
-	return tiles[z][x][y];
+	return tiles[x+y*width+z*width*height];
 }
-bool map::GetRevealed(tile* place){
-	return revealed[place->GetZ()][place->GetX()][place->GetY()];
+tile* tilearray::GetTileDangerous(ushort x, ushort y, ushort z){
+	return tiles[x+y*width+z*width*height];
 }
-bool map::GetVisible(tile* place){
-	return visible[place->GetZ()][place->GetX()][place->GetY()];
+tile* tilearray::GetTileDangerous(unsigned int i){
+	return tiles[i];
 }
-void map::SetRevealed(ushort x, ushort y, ushort z, bool key){
-	revealed[z][x][y] = key;
-}
-void map::SetVisible(ushort x, ushort y, ushort z, bool key){
-	visible[z][x][y] = key;
-}
-void map::DelTile(tile* target){
+void tilearray::DelTile(tile* target, tilewspace* replacement){
 	ushort x = target->GetX();
 	ushort y = target->GetY();
 	ushort z = target->GetZ();
 	item* ore = target->GetOre();
 	double dropchance = target->GetChance();
 	delete target;
-	tiles[z][x][y] = new tilewspace(x,y,z,(tilewspace*)air);
-	tilewspace* temp = (tilewspace*)tiles[z][x][y];
+	SetTile(x,y,z, new tilewspace(x,y,z,replacement));
+	tilewspace* temp = (tilewspace*)GetTile(x,y,z);
 	if(dropchance>=10.0/(10+rand()%90))
 		temp->AddObject((gameobjectmovable*)ore);
 }
+void tilearray::DelTile(ushort x, ushort y, ushort z, tilewspace* replacement){
+	tile* temp = GetTile(x,y,z);
+	DelTile(temp, replacement);
+}
+ushort tilearray::GetWidth(){		return width;}
+ushort tilearray::GetHeight(){		return height;}
+ushort tilearray::GetDepth(){		return depth;}
 
-void map::DelTile(ushort x, ushort y, ushort z){
-	item* ore = tiles[z][x][y]->GetOre();
-	double dropchance = tiles[z][x][y]->GetChance();
-	delete tiles[z][x][y];
-	tiles[z][x][y] = new tilewspace(x,y,z,(tilewspace*)air);
-	tilewspace* temp = (tilewspace*)tiles[z][x][y];
-	if(dropchance>=10.0/(10+rand()%90))
-		temp->AddObject((gameobjectmovable*)ore);
+map::map(ushort width, ushort height, ushort depth):
+	tilearray(width,height,depth)
+{
+	revealed = new bool[size];
+	visible = new bool[size];
+	for(unsigned int i=0;i<size;i++){
+		revealed[i] = false;
+		visible[i] = false;
+	}
+}
+
+map::~map(){
+	delete[] revealed;
+	delete[] visible;
+}
+bool map::GetRevealed(tile* place){
+	return revealed[place->GetX()+
+			place->GetY()*width+
+			place->GetZ()*width*height];
+}
+bool map::GetVisible(tile* place){
+	return visible[place->GetX()+
+			place->GetY()*width+
+			place->GetZ()*width*height];
+}
+void map::SetRevealed(tile* place, bool key){
+	revealed[place->GetX()+
+			place->GetY()*width+
+			place->GetZ()*width*height] = key;
+}
+void map::SetVisible(tile* place, bool key){
+	visible[place->GetX()+
+			place->GetY()*width+
+			place->GetZ()*width*height] = key;
+}
+void map::SetRevealed(tilearray* sphere,bool key){
+	ushort w = sphere->GetWidth();
+	ushort h = sphere->GetHeight();
+	ushort d = sphere->GetDepth();
+	unsigned int size = w*h*d;
+	for(unsigned int i=0; i<size; i++){
+		tile* temp = sphere->GetTileDangerous(i);
+		if(!temp){
+			continue;
+		}
+		SetRevealed(temp,key);
+	}
+	SetVisible(sphere, key);
+}
+void map::SetVisible(tilearray* sphere,bool key){
+	ushort w = sphere->GetWidth();
+	ushort h = sphere->GetHeight();
+	ushort d = sphere->GetDepth();
+	unsigned int size = w*h*d;
+	for(unsigned int i=0; i<size; i++){
+		tile* temp = sphere->GetTileDangerous(i);
+		if(!temp){
+			continue;
+		}
+		SetVisible(temp,key);
+	}
 }
 
 tile* map::FindTileOnVertical(ushort x, ushort y){
@@ -106,9 +134,6 @@ tile* map::FindTileOnVertical(ushort x, ushort y){
 	return nullptr;
 }
 
-ushort map::GetWidth(){		return width;}
-ushort map::GetHeight(){	return height;}
-ushort map::GetDepth(){		return depth;}
 
 tile* map::CastRay(tile* start, tile* end){
 	short x0 = start->GetX();
@@ -133,15 +158,13 @@ tile* map::CastRay(tile* start, tile* end){
 	short d = std::max(std::max(dx,dy),dz);
 
 	tile* temptile = start;
-	bool visible = true;
 	if(dx==d){
 		err1 = dy2 - dx;
 		err2 = dz2 - dx;
 		for(int i=0; i<dx; i++){
-			temptile = GetTile(x0,y0,z0);
+			temptile = GetTileDangerous(x0,y0,z0);
 			if(!temptile->IsSpace()){
-				visible = false;
-				break;
+				return temptile;
 			}
 			if(err1>0){
 				y0+=sy;
@@ -159,10 +182,9 @@ tile* map::CastRay(tile* start, tile* end){
 		err1 = dx2 - dy;
 		err2 = dz2 - dy;
 		for(int i=0; i<dy; i++){
-			temptile = GetTile(x0,y0,z0);
+			temptile = GetTileDangerous(x0,y0,z0);
 			if(!temptile->IsSpace()){
-				visible = false;
-				break;
+				return temptile;
 			}
 			if(err1>0){
 				x0+=sx;
@@ -180,10 +202,9 @@ tile* map::CastRay(tile* start, tile* end){
 		err1 = dy2 - dz;
 		err2 = dx2 - dz;
 		for(int i=0; i<dz; i++){
-			temptile = GetTile(x0,y0,z0);
+			temptile = GetTileDangerous(x0,y0,z0);
 			if(!temptile->IsSpace()){
-				visible = false;
-				break;
+				return temptile;
 			}
 			if(err1>0){
 				y0+=sy;
@@ -198,13 +219,10 @@ tile* map::CastRay(tile* start, tile* end){
 			z0+=sz;
 		}
 	}
-	if(visible){
-		temptile=end;
-	}
-	return temptile;
+	return end;
 }
 
-sightsphere* map::GetSphere(tile* center, ushort radius){
+tilearray* map::GetSphere(tile* center, ushort radius){
 	ushort cx = center->GetX();
 	ushort cy = center->GetY();
 	ushort cz = center->GetZ();
@@ -215,9 +233,10 @@ sightsphere* map::GetSphere(tile* center, ushort radius){
 	       z_positive_dist = (cz+5>=depth)? depth-1: cz+5,
 	       z_negative_dist = (cz-5<0)? 0: cz-5;
 	tile* t;
-	sightsphere* sphere = new sightsphere(abs(x_positive_dist-x_negative_dist),
+	tilearray* sphere = new tilearray(abs(x_positive_dist-x_negative_dist),
 				abs(y_positive_dist-y_negative_dist),
 				abs(z_positive_dist-z_negative_dist));
+	sphere->SetTile(cx-x_negative_dist,cy-y_negative_dist,cz-z_negative_dist,center);
 	for(int i=x_negative_dist; i<x_positive_dist; i++){
 		for(int j=y_negative_dist; j<y_positive_dist; j++){
 			for(int k=z_negative_dist; k<z_positive_dist; k++){
@@ -227,86 +246,44 @@ sightsphere* map::GetSphere(tile* center, ushort radius){
 				short distxy = sqrt(dx*dx+dy*dy);
 				short dist = sqrt(distxy*distxy+dz*dz);
 				if(dist>radius)	continue;
-				t = CastRay(center,tiles[k][i][j]);
-				sphere->SetTile(t->GetX()-x_negative_dist,
-						t->GetY()-y_negative_dist,
-						t->GetZ()-z_negative_dist,
+				tile* t = GetTileDangerous(i,j,k);
+				tile* t2;
+				tile* t3;
+				if(k+1>=GetDepth()||k+2>=GetDepth()){
+					continue;
+				}else{
+					t2 = GetTileDangerous(i,j,k+1);
+					t3 = GetTileDangerous(i,j,k+2);
+					if(t2->IsSpace()&&t3->IsSpace()){
+						continue;
+					}
+				}
+				t = CastRay(center,t);
+				short tx = t->GetX();
+				short ty = t->GetY();
+				short tz = t->GetZ();
+				sphere->SetTile(tx-x_negative_dist,
+						ty-y_negative_dist,
+						tz-z_negative_dist,
 						t);
+				if(t->IsSpace() && tz+1<z_positive_dist&& !t2->IsSpace()){
+					sphere->SetTile(tx-x_negative_dist,
+						ty-y_negative_dist,
+						tz+1-z_negative_dist,
+						t2);
+				}
 			}
 		}
 	}
 	return sphere;
 }
-
-sightsphere::sightsphere(ushort width, ushort height, ushort depth):
-	width(width),height(height),depth(depth)
-{
-	tiles = new tile***[depth];
-	revealed = new bool**[depth]();
-	visible = new bool**[depth]();
-	for(ushort z=0; z<depth; z++){
-		tiles[z] = new tile**[width];
-		revealed[z] = new bool*[width]();
-		visible[z] = new bool*[width]();
-		for(ushort x=0; x<width; x++){
-			tiles[z][x] = new tile*[height];
-			revealed[z][x] = new bool[height]();
-			visible[z][x] = new bool[height]();
-			for(ushort y=0; y<height; y++){
-				tiles[z][x][y] = nullptr;
-				revealed[z][x][y] = false;
-				visible[z][x][y] = false;
-			}
-		}
-	}
+void map::DelTile(tile* target){
+	tilearray::DelTile(target, (tilewspace*)air);
 }
-
-sightsphere::~sightsphere(){
-	for(ushort i=0; i<depth; i++){
-		for(ushort x=0; x<width; x++){
-			for(ushort y=0; y<height ;y++){
-				tiles[i][x][y]=nullptr;
-				delete tiles[i][x][y];
-			}
-			delete[] revealed[i][x];
-			delete[] visible[i][x];
-			delete[] tiles[i][x];
-		}
-		delete[] revealed[i];
-		delete[] visible[i];
-		delete[] tiles[i];
-	}
-	delete[] revealed;
-	delete[] visible;
-	delete[] tiles;
+void map::DelTile(ushort x, ushort y, ushort z){
+	tile* temp = GetTile(x,y,z);
+	tilearray::DelTile(temp, (tilewspace*) air);
 }
-
-void sightsphere::SetTile(ushort x, ushort y, ushort z, tile* target){
-	tiles[z][x][y] = target;
-}
-tile* sightsphere::GetTile(ushort x, ushort y, ushort z){
-	if(	z<0 || z>=depth || 
-		x<0 || x>=width ||
-		y<0 || y>=height)
-		return nullptr;
-	return tiles[z][x][y];
-}
-bool sightsphere::GetRevealed(tile* place){
-	return revealed[place->GetZ()][place->GetX()][place->GetY()];
-}
-bool sightsphere::GetVisible(tile* place){
-	return visible[place->GetZ()][place->GetX()][place->GetY()];
-}
-void sightsphere::SetRevealed(ushort x, ushort y, ushort z, bool key){
-	revealed[z][x][y] = key;
-}
-void sightsphere::SetVisible(ushort x, ushort y, ushort z, bool key){
-	visible[z][x][y] = key;
-}
-
-ushort sightsphere::GetWidth(){		return width;}
-ushort sightsphere::GetHeight(){	return height;}
-ushort sightsphere::GetDepth(){		return depth;}
 
 tile* Perlin::FindTile(std::string name, std::vector<tile*>tiletypes){
 	for(auto element:tiletypes){
@@ -394,48 +371,48 @@ Perlin::Perlin(ushort w, ushort h, ushort d, std::vector<tile*> tiletypes):map(w
 	for(short x=0; x<w; x++){
 		for(short y=0; y<h; y++){
 			short tiledepth = d-d/4+heightMap[x][y]*d/4;
-			tiles[d-1][x][y] = new tile(x,y,d-1,borderstone);
+			SetTile(x,y,d-1,new tile(x,y,d-1,borderstone));
 			short surfdepth = 1+rand()%3;
 			short middepth = (tiledepth-surfdepth)/3.0;
 			short bigdepth = middepth+rand()%3;
 			for(short z=1; z<tiledepth-surfdepth-middepth-bigdepth; z++){
-				tiles[d-1-z][x][y] = new tile(x,y,d-1-z,deepstone[0]);
+				SetTile(x,y,d-1-z,new tile(x,y,d-1-z,deepstone[0]));
 				mainNoise = noiseCavesMain.GetNoise(x,y,d-1-z);
 				secondNoise = noiseCavesSecond.GetNoise(x,y,d-1-z);
 				if(mainNoise<cavemainchance||secondNoise<cavesecondchance){
-					delete tiles[d-1-z][x][y];
-					tiles[d-1-z][x][y] = new tilewspace(x,y,d-1-z,(tilewspace*)air);
+					delete GetTile(x,y,d-1-z);
+					SetTile(x,y,d-1-z,new tilewspace(x,y,d-1-z,(tilewspace*)air));
 				}
 			}
 			for(short z=tiledepth-surfdepth-middepth-bigdepth; z<tiledepth-surfdepth-middepth; z++){
-				tiles[d-1-z][x][y] = new tile(x,y,d-1-z,midstone[0]);
+				SetTile(x,y,d-1-z,new tile(x,y,d-1-z,midstone[0]));
 				mainNoise = noiseCavesMain.GetNoise(x,y,d-1-z);
 				secondNoise = noiseCavesSecond.GetNoise(x,y,d-1-z);
 				if(mainNoise<cavemainchance||secondNoise<cavesecondchance){
-					delete tiles[d-1-z][x][y];
-					tiles[d-1-z][x][y] = new tilewspace(x,y,d-1-z,(tilewspace*)air);
+					delete GetTile(x,y,d-1-z);
+					SetTile(x,y,d-1-z,new tilewspace(x,y,d-1-z,(tilewspace*)air));
 				}
 			}
 			for(short z=tiledepth-surfdepth-middepth; z<tiledepth-surfdepth; z++){
-				tiles[d-1-z][x][y] = new tile(x,y,d-1-z,surfstone[0]);
+				SetTile(x,y,d-1-z,new tile(x,y,d-1-z,surfstone[0]));
 				mainNoise = noiseCavesMain.GetNoise(x,y,d-1-z);
 				secondNoise = noiseCavesSecond.GetNoise(x,y,d-1-z);
 				if(mainNoise<cavemainchance||secondNoise<cavesecondchance){
-					delete tiles[d-1-z][x][y];
-					tiles[d-1-z][x][y] = new tilewspace(x,y,d-1-z,(tilewspace*)air);
+					delete GetTile(x,y,d-1-z);
+					SetTile(x,y,d-1-z,new tilewspace(x,y,d-1-z,(tilewspace*)air));
 				}
 			}
 			for(short z=tiledepth-surfdepth; z<tiledepth; z++){
-				tiles[d-1-z][x][y] = new tile(x,y,d-1-z,coverstone[0]);
+				SetTile(x,y,d-1-z,new tile(x,y,d-1-z,coverstone[0]));
 				mainNoise = noiseCavesMain.GetNoise(x,y,d-1-z);
 				secondNoise = noiseCavesSecond.GetNoise(x,y,d-1-z);
 				if(mainNoise<cavemainchance||secondNoise<cavesecondchance){
-					delete tiles[d-1-z][x][y];
-					tiles[d-1-z][x][y] = new tilewspace(x,y,d-1-z,(tilewspace*)air);
+					delete GetTile(x,y,d-1-z);
+					SetTile(x,y,d-1-z,new tilewspace(x,y,d-1-z,(tilewspace*)air));
 				}
 			}
 			for(short z=tiledepth; z<d; z++){
-				tiles[d-1-z][x][y] = new tilewspace(x,y,d-1-z,(tilewspace*)air);
+				SetTile(x,y,d-1-z,new tilewspace(x,y,d-1-z,(tilewspace*)air));
 			}
 		}
 	}

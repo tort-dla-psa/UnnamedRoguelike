@@ -4,57 +4,46 @@
 #include<string>
 #include"gameobject.h"
 #include"tile.h"
-class sightsphere;
-class map{
-	ushort width,height,depth;
+class tilearray{
 protected:
-	tile**** tiles;
-	bool*** revealed;
-	bool*** visible;
+	tile** tiles;
+	ushort width, height, depth;
+	unsigned int size;
+	tile* GetTileDangerous(ushort x, ushort y, ushort z);
+public:
+	tilearray(ushort width, ushort height, ushort depth);
+	virtual ~tilearray();
+	void SetTile(ushort x, ushort y, ushort z, tile* target);
+	tile* GetTile(ushort x, ushort y, ushort z);
+	tile* GetTileDangerous(unsigned int i);
+	void DelTile(tile *target, tilewspace* replacement);
+	void DelTile(ushort x, ushort y, ushort z, tilewspace* replacement);
+	ushort GetWidth();
+	ushort GetHeight();
+	ushort GetDepth();
+};
+class map:public tilearray{
+protected:
+	bool* revealed;
+	bool* visible;
 	tile* air;
 	tile* borderstone;
 	tile* CastRay(tile* start, tile* end);
 public:
 	map(ushort width, ushort height, ushort depth);
 	virtual ~map();
-	void SetTile(ushort x, ushort y, ushort z, tile* target);
-	tile* GetTile(ushort x, ushort y, ushort z);
 
 	bool GetRevealed(tile* place);
 	bool GetVisible(tile* place);
-	void SetRevealed(ushort x, ushort y, ushort z, bool key);
-	void SetVisible(ushort x, ushort y, ushort z, bool key);
+	void SetRevealed(tile* place, bool key);
+	void SetVisible(tile* place, bool key);
+	void SetRevealed(tilearray* sphere, bool key);
+	void SetVisible(tilearray* sphere, bool key);
 	
-	void DelTile(tile *target);
+	void DelTile(tile* target);
 	void DelTile(ushort x, ushort y, ushort z);
 	tile* FindTileOnVertical(ushort x, ushort y);
-	ushort GetWidth();
-	ushort GetHeight();
-	ushort GetDepth();
-	//std::vector<tile*> GetSphere(tile* center, ushort radius);
-	sightsphere* GetSphere(tile* center, ushort radius);
-};
-
-class sightsphere{
-	ushort width,height,depth;
-protected:
-	tile**** tiles;
-	bool*** revealed;
-	bool*** visible;
-public:
-	sightsphere(ushort width, ushort height, ushort depth);
-	~sightsphere();
-	void SetTile(ushort x, ushort y, ushort z, tile* target);
-	tile* GetTile(ushort x, ushort y, ushort z);
-
-	bool GetRevealed(tile* place);
-	bool GetVisible(tile* place);
-	void SetRevealed(ushort x, ushort y, ushort z, bool key);
-	void SetVisible(ushort x, ushort y, ushort z, bool key);
-	
-	ushort GetWidth();
-	ushort GetHeight();
-	ushort GetDepth();
+	tilearray* GetSphere(tile* center, ushort radius);
 };
 
 class Perlin: public map{

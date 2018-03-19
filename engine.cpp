@@ -63,6 +63,8 @@ void engine::DoGravity(){
 		ushort y = i->GetY();
 		ushort z = i->GetZ()+1;
 		tile* tilebelow = mp->GetTile(x,y,z);
+		if(!tilebelow)
+			return;
 		if(!tilebelow->IsSpace())
 			return;
 		while(tilebelow && tilebelow->IsSpace()){
@@ -207,8 +209,7 @@ void engine::DelObject(gameobjectmovable* it){
 		if(it==i){
 			it->GetPlace()->RemoveObject(it);
 			items.erase(std::find(items.begin(),items.end(),i),items.end());
-			delete it;
-			return;
+						return;
 		}
 	}
 	for(auto c:creatures){
@@ -226,19 +227,29 @@ void engine::InitKeys(){
 	win->AddKey('D',win->iKEY_ATTACK_RIGHT);
 	win->AddKey('S',win->iKEY_ATTACK_DOWN);
 	win->AddKey('W',win->iKEY_ATTACK_UP);
+	win->AddKey('>',win->iKEY_ATTACK_DOWNZ);
+	win->AddKey('<',win->iKEY_ATTACK_UPZ);
+	win->AddKey('Q',win->iKEY_ATTACK_UPLEFT);
+	win->AddKey('E',win->iKEY_ATTACK_UPRIGHT);
+	win->AddKey('Z',win->iKEY_ATTACK_DOWNLEFT);
+	win->AddKey('C',win->iKEY_ATTACK_DOWNRIGHT);
 	win->AddKey('a',win->iKEY_LEFT);
 	win->AddKey('d',win->iKEY_RIGHT);
 	win->AddKey('s',win->iKEY_DOWN);
 	win->AddKey('w',win->iKEY_UP);
+	win->AddKey('.',win->iKEY_DOWNZ);
+	win->AddKey(',',win->iKEY_UPZ);
+	win->AddKey('q',win->iKEY_UPLEFT);
+	win->AddKey('e',win->iKEY_UPRIGHT);
+	win->AddKey('z',win->iKEY_DOWNLEFT);
+	win->AddKey('c',win->iKEY_DOWNRIGHT);
 	win->AddKey(10,win->iKEY_ENTER); 
 	win->AddKey(27,win->iKEY_ESC);
-	win->AddKey('c',win->iKEY_OPEN_CHAT);
+	win->AddKey('1',win->iKEY_OPEN_CHAT);
 	win->AddKey('l',win->iKEY_CAMERA_FLY);
 	win->AddKey('g',win->iKEY_PICK_UP);
 	win->AddKey('h',win->iKEY_DROP);
-	win->AddKey('i',win->iKEY_OPEN_INVENTORY);
-	win->AddKey('>',win->iKEY_DOWNZ);
-	win->AddKey('<',win->iKEY_UPZ);
+	win->AddKey('2',win->iKEY_OPEN_INVENTORY);
 }
 
 void engine::HandleKey(char ch){
@@ -246,7 +257,12 @@ void engine::HandleKey(char ch){
 	if(keycode==win->iKEYCODE_PLAYER_MOVE_UP||
 			keycode==win->iKEYCODE_PLAYER_MOVE_DOWN||
 			keycode==win->iKEYCODE_PLAYER_MOVE_LEFT||
-			keycode==win->iKEYCODE_PLAYER_MOVE_RIGHT)
+			keycode==win->iKEYCODE_PLAYER_MOVE_RIGHT||
+			keycode==win->iKEYCODE_PLAYER_MOVE_UPLEFT||
+			keycode==win->iKEYCODE_PLAYER_MOVE_UPRIGHT||
+			keycode==win->iKEYCODE_PLAYER_MOVE_DOWNLEFT||
+			keycode==win->iKEYCODE_PLAYER_MOVE_DOWNRIGHT
+			)
 	{
 		MovePlayer(keycode);
 	}else if(keycode==win->iKEYCODE_PLAYER_ATTACK_UP||
@@ -285,88 +301,32 @@ void engine::MainLoop(){
 	CreateItem('0',materials[0],1,0,0);
 	CreateItem('1',materials[1],2,0,0);
 	CreateItem('2',materials[2],2,0,0);
-	DoGravity();
 	tile* destignation = mp->FindTileOnVertical(25,12);
 
 	tile* start = (tile*)creatures[1]->GetPlace();
 	std::vector<tilewspace*> path = pathfinder->FindPath(mp,start,destignation); 
 	creatures[1]->SetPath(path);
-	sightsphere* mptemp = mp->GetSphere((tile*)win->GetCamPlace(),player->GetSightSize());
-	sightsphere* mptemp2;
-	short w = mptemp->GetWidth();
-	short h = mptemp->GetHeight();
-	short d = mptemp->GetDepth();
-	for(short i=0; i<w; i++){
-		for(short j=0;j<h;j++){
-			for(short k=0;k<d;k++){
-				tile* temp = mptemp->GetTile(i,j,k);
-				if(!temp){
-					continue;
-				}
-				mp->SetRevealed(temp->GetX(),
-						temp->GetY(),
-						temp->GetZ(),true);
-				mp->SetVisible(temp->GetX(),
-						temp->GetY(),
-						temp->GetZ(),true);
-			}
-		}
-	}
+	tilearray* mptemp = mp->GetSphere(player->GetPlace(),player->GetSightSize());
+	tilearray* mptemp2;
+	mp->SetRevealed(mptemp, true);
+	win->SetCamParameters(win->GetWidth(),win->GetHeight());
 
 	while(player!=NULL){
 		win->CheckResize();
 		win->SetCamParameters(win->GetWidth(),win->GetHeight());
-		//map* mp2 = mp->GetSphere((tile*)(win->GetCamPlace(), player->GetSightSize());
-		//player->SetSeen(mp);
-		//win->DrawMap(player->GetSeen()));
-		win->DrawMap(mp);
-		win->Draw();
 		char ch = getch();
 		HandleKey(ch);
-		sightsphere* mptemp2 = mp->GetSphere(player->GetPlace(), player->GetSightSize());
-	w = mptemp->GetWidth();
-	h = mptemp->GetHeight();
-	d = mptemp->GetDepth();
-	for(short i=0; i<w; i++){
-		for(short j=0;j<h;j++){
-			for(short k=0;k<d;k++){
-				tile* temp = mptemp->GetTile(i,j,k);
-				if(!temp){
-					continue;
-				}
-				mp->SetVisible(temp->GetX(),
-						temp->GetY(),
-						temp->GetZ(),false);
-			}
-		}
-	}
-	w = mptemp2->GetWidth();
-	h = mptemp2->GetHeight();
-	d = mptemp2->GetDepth();
-	for(short i=0; i<w; i++){
-		for(short j=0;j<h;j++){
-			for(short k=0;k<d;k++){
-				tile* temp = mptemp2->GetTile(i,j,k);
-				if(!temp){
-					continue;
-				}
-				mp->SetRevealed(temp->GetX(),
-						temp->GetY(),
-						temp->GetZ(),true);
-				mp->SetVisible(temp->GetX(),
-						temp->GetY(),
-						temp->GetZ(),true);
-			}
-		}
-	}
-	delete mptemp;
-	mptemp = mptemp2;
+		mptemp2 = mp->GetSphere(player->GetPlace(), player->GetSightSize());
+		mp->SetVisible(mptemp,false);
+		mp->SetRevealed(mptemp2,true);
+		mptemp = mptemp2;
 		creatures[1]->FollowPath();
 		if(ch=='0')
 			break;
 		DoGravity();
+		win->DrawMap(mp);
+		win->Draw();
 	}
-	delete mptemp,mptemp2;
 }
 
 short* engine::GetDir(iConstInt keycode){
@@ -401,6 +361,26 @@ short* engine::GetDir(iConstInt keycode){
 		keycode==win->iKEYCODE_CAM_MOVE_UPZ)
 	{
 		z-=1;
+	}else if(keycode==win->iKEYCODE_PLAYER_MOVE_UPLEFT||
+		keycode==win->iKEYCODE_PLAYER_ATTACK_UPLEFT)
+	{
+		x-=1;
+		y-=1;
+	}else if(keycode==win->iKEYCODE_PLAYER_MOVE_UPRIGHT||
+		keycode==win->iKEYCODE_PLAYER_ATTACK_UPRIGHT)
+	{
+		x+=1;
+		y-=1;
+	}else if(keycode==win->iKEYCODE_PLAYER_MOVE_DOWNLEFT||
+		keycode==win->iKEYCODE_PLAYER_ATTACK_DOWNLEFT)
+	{
+		x-=1;
+		y+=1;
+	}else if(keycode==win->iKEYCODE_PLAYER_MOVE_DOWNRIGHT||
+		keycode==win->iKEYCODE_PLAYER_ATTACK_DOWNRIGHT)
+	{
+		x+=1;
+		y+=1;
 	}
 	return new short[3]{x,y,z};
 }

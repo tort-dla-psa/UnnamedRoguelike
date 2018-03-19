@@ -27,6 +27,7 @@ mypalette::mypalette(){
 		}
 	}
 	pairs = new myPair**[maxpairs];
+	whites = new myPair*[5];
 	for(short i=0;i<14;i++){
 		pairs[i] = new myPair*[5];
 		pairscount++;
@@ -40,6 +41,11 @@ mypalette::mypalette(){
 			}
 		}
 	}
+	whites[0] = pairs[1][0];
+	whites[1] = pairs[1][1];
+	whites[2] = pairs[1][2];
+	whites[3] = pairs[1][3];
+	whites[4] = pairs[1][4];
 }
 
 mypalette::~mypalette(){
@@ -98,12 +104,10 @@ myPair* mypalette::GetPair(short x, short y){
 
 myPair* mypalette::GetPair(short r1, short g1, short b1,short r2, short g2, short b2){
 	for(auto p:pairstorage){
-		if(p->GetFg()->GetR()==r1&&
-			p->GetFg()->GetG()==g1&&
-			p->GetFg()->GetB()==b1&&
-			p->GetBg()->GetR()==r2&&
-			p->GetBg()->GetG()==g2&&
-			p->GetBg()->GetB()==b2)
+		myColor* fg = p->GetFg();
+		myColor* bg = p->GetBg();
+		if(fg->GetR()==r1 && fg->GetG()==g1&& fg->GetB()==b1 &&
+			bg->GetR()==r2 && bg->GetG()==g2 && bg->GetB()==b2)
 		{
 			return p;
 		}
@@ -168,6 +172,9 @@ myPair* mypalette::GetDarker(myPair* target, short delta){
 			}
 		}
 	}
+}
+myPair* mypalette::GetWhite(short delta){
+	return whites[delta];
 }
 
 short mypalette::GetColorsCount(){	return colorscount;}
