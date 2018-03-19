@@ -18,6 +18,7 @@ public:
         ushort GetX();
         ushort GetY();
         ushort GetZ();
+	gameobjectstatic* GetPlace();
         ushort GetOffsetX();
         ushort GetOffsetY();
 };

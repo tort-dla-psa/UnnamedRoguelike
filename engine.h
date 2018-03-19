@@ -35,10 +35,8 @@ class engine{
 	void MoveCam(iConstInt keycode);
 	void PerformAttack(iConstInt keycode);
 	short* GetDir(iConstInt keycode);
-	void DrawMap();
 	void DoGravity();
 	void HandleKey(char ch);
-	void DrawRecurse(ushort x, ushort y, ushort z, ushort iter, ushort max);
 	void InitKeys();
 public:
 	engine();

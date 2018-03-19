@@ -52,4 +52,9 @@ ushort camera::GetZ(){
                 return targetmov->GetZ();
         return targetstat->GetZ();
 }
+gameobjectstatic* camera::GetPlace(){
+	if(targetmov)
+        	return (gameobjectstatic*)(targetmov->GetPlace());
+        return targetstat;
+}
 bool camera::Flying(){  return (targetstat);}

@@ -1,6 +1,7 @@
 #ifndef interface_h
 #define interface_h
 #include <vector>
+#include <map>
 #include"iConstInt.h"
 
 class window;
@@ -17,18 +18,7 @@ class creature;
 class gameobjectmovable;
 class gameobjectstatic;
 class camera;
-
-class keytie{
-	char key;
-	iConstInt returncode;
-public:
-	keytie(char key, iConstInt returncode);
-	~keytie();
-	void SetKey(char key);
-	void SetCode(iConstInt code);
-	char GetChar();
-	iConstInt GetCode();
-};
+class map;
 
 class interface{
 	std::vector<window*> wins;
@@ -40,7 +30,7 @@ class interface{
 	window_playerstats* playerstat;
 	attack_dialog* attackdialog;
 	mypalette* palette;
-	std::vector<keytie*> keys;
+	std::map<char,iConstInt> keyties;
 	short width,height;
 	int pastkey;
 	int pastkeycode;
@@ -50,6 +40,7 @@ class interface{
 	void InitKeycodes();
 	int GetNextKey();
 	int GetNextKeycode();
+	iConstInt GetKeycode(char ch);
 	void OpenGameInterface();
 public:
 	iConstInt iKEY_UP;
@@ -58,10 +49,20 @@ public:
 	iConstInt iKEY_RIGHT;
 	iConstInt iKEY_UPZ;
 	iConstInt iKEY_DOWNZ;
+	iConstInt iKEY_UPLEFT;
+	iConstInt iKEY_UPRIGHT;
+	iConstInt iKEY_DOWNLEFT;
+	iConstInt iKEY_DOWNRIGHT;
 	iConstInt iKEY_ATTACK_UP;
 	iConstInt iKEY_ATTACK_DOWN;
 	iConstInt iKEY_ATTACK_LEFT;
 	iConstInt iKEY_ATTACK_RIGHT;
+	iConstInt iKEY_ATTACK_UPZ;
+	iConstInt iKEY_ATTACK_DOWNZ;
+	iConstInt iKEY_ATTACK_UPLEFT;
+	iConstInt iKEY_ATTACK_UPRIGHT;
+	iConstInt iKEY_ATTACK_DOWNLEFT;
+	iConstInt iKEY_ATTACK_DOWNRIGHT;
 	iConstInt iKEY_PICK_UP;
 	iConstInt iKEY_DROP;
 	iConstInt iKEY_OPEN_INVENTORY;
@@ -72,16 +73,27 @@ public:
 	iConstInt iKEY_PGUP;
 	iConstInt iKEY_PGDOWN;
 
+	iConstInt iKEYCODE_NOTHING;
 	iConstInt iKEYCODE_PLAYER_MOVE_UP;
 	iConstInt iKEYCODE_PLAYER_MOVE_DOWN;
 	iConstInt iKEYCODE_PLAYER_MOVE_LEFT;
 	iConstInt iKEYCODE_PLAYER_MOVE_RIGHT;
+	iConstInt iKEYCODE_PLAYER_MOVE_UPZ;
+	iConstInt iKEYCODE_PLAYER_MOVE_DOWNZ;
+	iConstInt iKEYCODE_PLAYER_MOVE_UPLEFT;
+	iConstInt iKEYCODE_PLAYER_MOVE_UPRIGHT;
+	iConstInt iKEYCODE_PLAYER_MOVE_DOWNLEFT;
+	iConstInt iKEYCODE_PLAYER_MOVE_DOWNRIGHT;
 	iConstInt iKEYCODE_PLAYER_ATTACK_UP;
 	iConstInt iKEYCODE_PLAYER_ATTACK_DOWN;
 	iConstInt iKEYCODE_PLAYER_ATTACK_LEFT;
 	iConstInt iKEYCODE_PLAYER_ATTACK_RIGHT;
 	iConstInt iKEYCODE_PLAYER_ATTACK_UPZ;
 	iConstInt iKEYCODE_PLAYER_ATTACK_DOWNZ;
+	iConstInt iKEYCODE_PLAYER_ATTACK_UPLEFT;
+	iConstInt iKEYCODE_PLAYER_ATTACK_UPRIGHT;
+	iConstInt iKEYCODE_PLAYER_ATTACK_DOWNLEFT;
+	iConstInt iKEYCODE_PLAYER_ATTACK_DOWNRIGHT;
 	iConstInt iKEYCODE_PLAYER_PICK_UP;
 	iConstInt iKEYCODE_PLAYER_DROP;
 	iConstInt iKEYCODE_CAM_MOVE_UP;
@@ -106,6 +118,7 @@ public:
 	void CheckResize();
 	void Draw();
 	void ClearMap();
+	void DrawMap(map* tilemap);
 	void DrawOnMap(short x,short y,char ch);
 	void DrawOnMap(short x,short y,char ch, short delta);
 	void DrawOnMap(short x,short y,char ch, myPair* color);
@@ -135,6 +148,7 @@ public:
 	short GetCamX();
 	short GetCamY();
 	short GetCamZ();
+	gameobjectstatic* GetCamPlace();
 	short GetCamOffsetX();
 	short GetCamOffsetY();
 	void CamFollow(gameobjectmovable* target);
