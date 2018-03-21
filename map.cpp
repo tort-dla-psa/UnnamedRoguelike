@@ -232,7 +232,6 @@ tilearray* map::GetSphere(tile* center, ushort radius){
 	       y_negative_dist = (cy-radius<0)? 0: cy-radius,
 	       z_positive_dist = (cz+5>=depth)? depth-1: cz+5,
 	       z_negative_dist = (cz-5<0)? 0: cz-5;
-	tile* t;
 	tilearray* sphere = new tilearray(abs(x_positive_dist-x_negative_dist),
 				abs(y_positive_dist-y_negative_dist),
 				abs(z_positive_dist-z_negative_dist));
@@ -247,31 +246,28 @@ tilearray* map::GetSphere(tile* center, ushort radius){
 				short dist = sqrt(distxy*distxy+dz*dz);
 				if(dist>radius)	continue;
 				tile* t = GetTileDangerous(i,j,k);
-				tile* t2;
-				tile* t3;
-				if(k+1>=GetDepth()||k+2>=GetDepth()){
-					continue;
-				}else{
-					t2 = GetTileDangerous(i,j,k+1);
-					t3 = GetTileDangerous(i,j,k+2);
-					if(t2->IsSpace()&&t3->IsSpace()){
-						continue;
-					}
-				}
 				t = CastRay(center,t);
 				short tx = t->GetX();
 				short ty = t->GetY();
 				short tz = t->GetZ();
-				sphere->SetTile(tx-x_negative_dist,
+				if(!t->IsSpace()||(((tilewspace*)t)->HasObjects())){
+					sphere->SetTile(tx-x_negative_dist,
 						ty-y_negative_dist,
 						tz-z_negative_dist,
 						t);
-				if(t->IsSpace() && tz+1<z_positive_dist&& !t2->IsSpace()){
-					sphere->SetTile(tx-x_negative_dist,
-						ty-y_negative_dist,
-						tz+1-z_negative_dist,
-						t2);
+					continue;
 				}
+				if(k+1>=z_positive_dist){
+					continue;
+				}
+				tile* t2 = GetTileDangerous(tx,ty,tz+1);
+				if(t2->IsSpace()){
+					continue;
+				}
+				sphere->SetTile(tx-x_negative_dist,
+					ty-y_negative_dist,
+					tz+1-z_negative_dist,
+					t2);
 			}
 		}
 	}
